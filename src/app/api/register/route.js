@@ -1,6 +1,6 @@
 import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User.model";
-import { registerZodSchema } from "@/Schemas/user.schema";
+import { registerZodSchema } from "@/schemas/user.schema";
 import { sendVerificationEmail } from "@/helper/sendEmail"; // Adjust path as needed
 
 export async function POST(req) {

@@ -438,7 +438,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { loginZodSchema } from "@/Schemas/user.schema"; 
+import { loginZodSchema } from "@/schemas/user.schema"; 
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Link from "next/link";

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { registerZodSchema } from "@/Schemas/user.schema"; 
+import { registerZodSchema } from "@/schemas/user.schema"; 
 import axios from "axios"; // Using standard axios for simplicity
 import { toast } from "sonner";
 import { useRouter } from "next/navigation"; // Next.js routing
