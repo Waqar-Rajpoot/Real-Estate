@@ -477,34 +477,87 @@ export default function Login() {
     },
   });
 
+  // async function onSubmit(values) {
+  //   setLoading(true);
+  //   try {
+  //     // Direct sign-in with credentials
+  //     const result = await signIn("credentials", {
+  //       redirect: false,
+  //       identifier: values.identifier,
+  //       password: values.password,
+  //     });
+
+  //     if (result?.error) {
+  //       toast.error(result.error || "Login failed");
+  //       setLoading(false);
+  //       return;
+  //     }
+
+  //     if (result?.ok) {
+  //       toast.success("Welcome back!");
+  //       router.push("/agency/agency-register");
+  //       router.refresh();
+  //     }
+  //   } catch (error) {
+  //     console.error("Login error:", error);
+  //     toast.error("An unexpected error occurred");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }
+
+
   async function onSubmit(values) {
-    setLoading(true);
-    try {
-      // Direct sign-in with credentials
-      const result = await signIn("credentials", {
-        redirect: false,
-        identifier: values.identifier,
-        password: values.password,
-      });
+  setLoading(true);
+  try {
+    const result = await signIn("credentials", {
+      redirect: false,
+      identifier: values.identifier,
+      password: values.password,
+    });
 
-      if (result?.error) {
-        toast.error(result.error || "Login failed");
-        setLoading(false);
-        return;
-      }
-
-      if (result?.ok) {
-        toast.success("Welcome back!");
-        router.push("/agency/agency-register");
-        router.refresh();
-      }
-    } catch (error) {
-      console.error("Login error:", error);
-      toast.error("An unexpected error occurred");
-    } finally {
+    if (result?.error) {
+      toast.error(result.error || "Login failed");
       setLoading(false);
+      return;
     }
+
+    if (result?.ok) {
+      // 1. Fetch the updated session to get the user role
+      const response = await fetch("/api/auth/session");
+      const session = await response.json();
+      const userRole = session?.user?.role;
+
+      toast.success("Welcome back!");
+
+      // 2. Logic-based redirection
+      switch (userRole) {
+        case "Admin":
+          router.push("/admin");
+          break;
+        case "Agency":
+          router.push("/agency/dashboard"); 
+          break;
+        case "Agent":
+          router.push("/agent/dashboard");
+          break;
+        case "Buyer":
+          router.push("/marketplace");
+          break;
+        default:
+          router.push("/");
+      }
+
+      router.refresh();
+    }
+  } catch (error) {
+    console.error("Login error:", error);
+    toast.error("An unexpected error occurred");
+  } finally {
+    setLoading(false);
   }
+}
+
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 relative overflow-hidden p-4">
