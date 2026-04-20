@@ -482,7 +482,7 @@ export default function AgenciesPage() {
               className="pl-11 h-11 bg-slate-50 border-none focus-visible:ring-2 focus-visible:ring-blue-500/10 transition-all rounded-xl placeholder:text-slate-400" 
             />
           </div>
-          <Button variant="outline" className="rounded-xl border-slate-200 text-slate-600 font-bold">
+          <Button variant="outline" className="rounded-xl border-slate-200 text-slate-100 font-bold">
             <Filter className="h-4 w-4 mr-2" /> Advanced Filters
           </Button>
         </div>

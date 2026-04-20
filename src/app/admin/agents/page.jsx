@@ -259,9 +259,6 @@ export default function AgentsPage() {
           <h1 className="text-4xl font-black text-slate-900 tracking-tight">Agent Directory</h1>
           <p className="text-slate-500 font-medium mt-1">Audit professional rankings, verify credentials, and manage affiliations.</p>
         </div>
-        <Button className="bg-slate-900 hover:bg-slate-800 text-white px-6 h-11 rounded-xl shadow-xl shadow-slate-200 transition-all active:scale-95">
-          <UserPlus className="mr-2 h-4 w-4" /> Add New Agent
-        </Button>
       </div>
 
       {/* Stats Cards */}
@@ -291,7 +288,7 @@ export default function AgentsPage() {
               className="pl-11 h-12 bg-slate-50/50 border-none focus:bg-white focus:ring-4 focus:ring-indigo-50 transition-all rounded-2xl font-medium" 
             />
           </div>
-          <Button variant="outline" className="h-12 rounded-2xl border-slate-200 text-slate-600 font-bold px-6 hover:bg-slate-50 transition-all">
+          <Button variant="outline" className="h-12 rounded-2xl border-slate-200 text-slate-100 font-bold px-6 hover:bg-slate-50 transition-all">
             <Filter className="h-4 w-4 mr-2" /> Advanced Filters
           </Button>
         </div>

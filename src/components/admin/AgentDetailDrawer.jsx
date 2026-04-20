@@ -228,13 +228,6 @@
 //   );
 // }
 
-
-
-
-
-
-
-
 "use client";
 import React, { useState, useEffect } from "react";
 import {
@@ -246,24 +239,29 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
-  Check, 
-  X, 
-  ShieldCheck, 
-  Trophy, 
-  Mail, 
-  Phone, 
-  Star, 
-  Fingerprint, 
-  UserCheck, 
+import {
+  Check,
+  X,
+  ShieldCheck,
+  Trophy,
+  Mail,
+  Phone,
+  Star,
+  Fingerprint,
+  UserCheck,
   Zap,
   ExternalLink,
-  ShieldAlert
+  ShieldAlert,
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 
-export default function AgentDetailDrawer({ isOpen, onClose, agentId, refresh }) {
+export default function AgentDetailDrawer({
+  isOpen,
+  onClose,
+  agentId,
+  refresh,
+}) {
   const [agent, setAgent] = useState(null);
   const [loading, setLoading] = useState(false);
   const [updating, setUpdating] = useState(false);
@@ -321,7 +319,6 @@ export default function AgentDetailDrawer({ isOpen, onClose, agentId, refresh })
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent className="sm:max-w-xl p-0 overflow-y-auto bg-slate-50 border-l border-slate-200">
-        
         {/* Header Section with Glass Effect */}
         <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-100 p-8">
           <div className="flex items-center justify-between">
@@ -345,7 +342,10 @@ export default function AgentDetailDrawer({ isOpen, onClose, agentId, refresh })
                     {agent.agentRank}
                   </Badge>
                   {agent.isVerified && (
-                    <Badge variant="outline" className="border-blue-200 text-blue-600 bg-blue-50/50 font-bold text-[10px] py-1 px-3 rounded-lg flex items-center gap-1">
+                    <Badge
+                      variant="outline"
+                      className="border-blue-200 text-blue-600 bg-blue-50/50 font-bold text-[10px] py-1 px-3 rounded-lg flex items-center gap-1"
+                    >
                       <ShieldCheck className="h-3 w-3" /> VERIFIED
                     </Badge>
                   )}
@@ -358,13 +358,23 @@ export default function AgentDetailDrawer({ isOpen, onClose, agentId, refresh })
         <div className="p-8 space-y-8 pb-24">
           {/* Action Grid */}
           <div className="grid grid-cols-2 gap-4">
-            <a href={`mailto:${agent.email}`} className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-blue-500 hover:text-blue-600 transition-all group">
+            <a
+              href={`mailto:${agent.email}`}
+              className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-blue-500 hover:text-blue-600 transition-all group"
+            >
               <Mail className="h-5 w-5 mb-2 text-slate-400 group-hover:text-blue-600" />
-              <span className="text-[10px] font-black uppercase tracking-widest">Email Agent</span>
+              <span className="text-[10px] font-black uppercase tracking-widest">
+                Email Agent
+              </span>
             </a>
-            <a href={`tel:${agent.phoneNumber}`} className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-emerald-500 hover:text-emerald-600 transition-all group">
+            <a
+              href={`tel:${agent.phoneNumber}`}
+              className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-emerald-500 hover:text-emerald-600 transition-all group"
+            >
               <Phone className="h-5 w-5 mb-2 text-slate-400 group-hover:text-emerald-600" />
-              <span className="text-[10px] font-black uppercase tracking-widest">Direct Call</span>
+              <span className="text-[10px] font-black uppercase tracking-widest">
+                Direct Call
+              </span>
             </a>
           </div>
 
@@ -378,14 +388,16 @@ export default function AgentDetailDrawer({ isOpen, onClose, agentId, refresh })
                 BRN: {agent.cnic || "PENDING"}
               </span>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               {[
                 { label: "Front Document", url: agent.cnicFrontUrl },
-                { label: "Rear Document", url: agent.cnicBackUrl }
+                { label: "Rear Document", url: agent.cnicBackUrl },
               ].map((doc, idx) => (
                 <div key={idx} className="space-y-2 group">
-                  <p className="text-[9px] font-black text-slate-500 uppercase px-1">{doc.label}</p>
+                  <p className="text-[9px] font-black text-slate-500 uppercase px-1">
+                    {doc.label}
+                  </p>
                   <div className="relative rounded-3xl overflow-hidden border-2 border-white shadow-xl aspect-video bg-slate-200">
                     <img
                       src={doc.url}
@@ -393,7 +405,7 @@ export default function AgentDetailDrawer({ isOpen, onClose, agentId, refresh })
                       alt={doc.label}
                     />
                     <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                       <ExternalLink className="text-white h-6 w-6" />
+                      <ExternalLink className="text-white h-6 w-6" />
                     </div>
                   </div>
                 </div>
@@ -406,16 +418,22 @@ export default function AgentDetailDrawer({ isOpen, onClose, agentId, refresh })
           {/* Platform Governance */}
           <section className="space-y-6">
             <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 px-1">
-              <ShieldAlert className="h-4 w-4 text-slate-400" /> Platform Governance
+              <ShieldAlert className="h-4 w-4 text-slate-400" /> Platform
+              Governance
             </h4>
 
             <div className="space-y-4 bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <Label className="text-sm font-black text-slate-900 flex items-center gap-2">
-                    Verified Status {agent.isVerified && <Check className="h-4 w-4 text-blue-600" />}
+                    Verified Status{" "}
+                    {agent.isVerified && (
+                      <Check className="h-4 w-4 text-blue-600" />
+                    )}
                   </Label>
-                  <p className="text-[11px] text-slate-400 font-medium">Grant professional authenticity badges.</p>
+                  <p className="text-[11px] text-slate-400 font-medium">
+                    Grant professional authenticity badges.
+                  </p>
                 </div>
                 <Switch
                   checked={agent.isVerified}
@@ -429,8 +447,12 @@ export default function AgentDetailDrawer({ isOpen, onClose, agentId, refresh })
 
               <div className="flex items-center justify-between pt-2">
                 <div className="space-y-1">
-                  <Label className="text-sm font-black text-slate-900">Platform Visibility</Label>
-                  <p className="text-[11px] text-slate-400 font-medium">Temporarily disable account functionality.</p>
+                  <Label className="text-sm font-black text-slate-900">
+                    Platform Visibility
+                  </Label>
+                  <p className="text-[11px] text-slate-400 font-medium">
+                    Temporarily disable account functionality.
+                  </p>
                 </div>
                 <Switch
                   checked={agent.isActive}
@@ -450,17 +472,23 @@ export default function AgentDetailDrawer({ isOpen, onClose, agentId, refresh })
                 disabled={updating}
               >
                 <Trophy className="mr-2 h-4 w-4 text-amber-500 group-hover:scale-110 transition-transform" />
-                <span className="font-black text-xs uppercase tracking-tight text-slate-700">Set Top Performer</span>
+                <span className="font-black text-xs uppercase tracking-tight text-slate-700">
+                  Set Top Performer
+                </span>
               </Button>
-              
+
               <Button
                 variant="outline"
-                className={`h-14 rounded-2xl transition-all border-indigo-100 ${agent.isFeatured ? 'bg-indigo-600 text-white border-none' : 'bg-white hover:bg-indigo-50'}`}
+                className={`h-14 rounded-2xl transition-all border-indigo-100 ${agent.isFeatured ? "bg-indigo-600 text-white border-none" : "bg-white hover:bg-indigo-50"}`}
                 onClick={() => handleUpdate({ isFeatured: !agent.isFeatured })}
                 disabled={updating}
               >
-                <Zap className={`mr-2 h-4 w-4 ${agent.isFeatured ? 'text-white animate-pulse' : 'text-indigo-600'}`} />
-                <span className="font-black text-xs uppercase tracking-tight">{agent.isFeatured ? 'Featured' : 'Promote'}</span>
+                <Zap
+                  className={`mr-2 h-4 w-4 ${agent.isFeatured ? "text-white animate-pulse" : "text-indigo-600"}`}
+                />
+                <span className="font-black text-xs uppercase tracking-tight">
+                  {agent.isFeatured ? "Featured" : "Promote"}
+                </span>
               </Button>
             </div>
           </section>
@@ -468,12 +496,19 @@ export default function AgentDetailDrawer({ isOpen, onClose, agentId, refresh })
 
         {/* Footer Actions */}
         <div className="absolute bottom-0 left-0 right-0 p-6 bg-white/80 backdrop-blur-md border-t border-slate-100 flex gap-4">
-            <Button onClick={onClose} variant="ghost" className="flex-1 font-black text-xs uppercase tracking-widest text-slate-400 h-12 rounded-xl">
-               Dismiss Audit
-            </Button>
-            <Button onClick={onClose} className="flex-1 bg-slate-900 hover:bg-slate-800 font-black text-xs uppercase tracking-widest h-12 rounded-xl text-white shadow-xl">
-               Complete Review
-            </Button>
+          <Button
+            onClick={onClose}
+            variant="ghost"
+            className="flex-1 font-black text-xs uppercase tracking-widest text-slate-400 h-12 rounded-xl"
+          >
+            Dismiss Audit
+          </Button>
+          <Button
+            onClick={onClose} 
+            className="flex-1 bg-slate-900 hover:bg-slate-800 font-black text-xs uppercase tracking-widest h-12 rounded-xl text-white shadow-xl"
+          >
+            Complete Review
+          </Button>
         </div>
       </SheetContent>
     </Sheet>
