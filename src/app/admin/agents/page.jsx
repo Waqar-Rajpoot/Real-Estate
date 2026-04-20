@@ -285,10 +285,10 @@ export default function AgentsPage() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within:text-indigo-600 transition-colors" />
             <Input 
               placeholder="Search by agent name, BRN, or city..." 
-              className="pl-11 h-12 bg-slate-50/50 border-none focus:bg-white focus:ring-4 focus:ring-indigo-50 transition-all rounded-2xl font-medium" 
+              className="pl-10 bg-white ring-2 focus:ring-indigo-500/20 border-indigo-500 transition-all rounded-xl placeholder:text-slate-400" 
             />
           </div>
-          <Button variant="outline" className="h-12 rounded-2xl border-slate-200 text-slate-100 font-bold px-6 hover:bg-slate-50 transition-all">
+          <Button variant="outline" className="h-12 rounded-2xl border-slate-200 text-slate-100 font-bold px-6 transition-all">
             <Filter className="h-4 w-4 mr-2" /> Advanced Filters
           </Button>
         </div>
