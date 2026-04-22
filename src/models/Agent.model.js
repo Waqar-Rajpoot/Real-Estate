@@ -156,7 +156,12 @@ const agentSchema = new mongoose.Schema({
   },
   verifiedBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'Agency', 
+  },
+  accountStatus: {
+  type: String,
+  enum: ["active", "suspended", "rejected", "blocked"],
+  default: "active",
   },
   rejectionReason: {
     type: String,

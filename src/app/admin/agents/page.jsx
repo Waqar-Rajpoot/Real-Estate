@@ -1,40 +1,22 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { 
-  Users, 
-  ShieldCheck, 
-  Trophy, 
-  Search, 
-  Filter, 
-  MoreVertical, 
-  ExternalLink,
-  Star,
-  MapPin,
+  Users, ShieldCheck, Trophy, Search, 
+  Star, MapPin, Building2, ChevronRight 
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import AgentDetailDrawer from "@/components/admin/AgentDetailDrawer";
 
 const AgentsPage = () => {
+  const router = useRouter();
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedAgentId, setSelectedAgentId] = useState(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchAgents();
@@ -52,190 +34,153 @@ const AgentsPage = () => {
     }
   };
 
-  const openReview = (id) => {
-    setSelectedAgentId(id);
-    setIsDrawerOpen(true);
-  };
+  // Grouping Logic by Agency
+  const groupedAgents = useMemo(() => {
+    const filtered = agents.filter(agent => 
+      agent.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      agent.serviceCity.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      agent.agency?.companyName?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    return filtered.reduce((acc, agent) => {
+      const agencyName = agent.agency?.companyName || "Independent / Freelance";
+      if (!acc[agencyName]) acc[agencyName] = [];
+      acc[agencyName].push(agent);
+      return acc;
+    }, {});
+  }, [agents, searchTerm]);
 
   const stats = [
     { label: "Total Talent Pool", value: agents.length, icon: Users, color: "text-blue-600", bg: "bg-blue-50/50", border: "border-t-blue-500" },
     { label: "Verified Experts", value: agents.filter(a => a.isVerified).length, icon: ShieldCheck, color: "text-indigo-600", bg: "bg-indigo-50/50", border: "border-t-indigo-500" },
-    { label: "Top Performers", value: agents.filter(a => a.agentRank === 'Top Performer').length, icon: Trophy, color: "text-amber-500", bg: "bg-amber-50/50", border: "border-t-amber-500" },
+    { label: "Top Performers", value: agents.filter(a => a.agentRank === 'Top Performer' || a.rating >= 4.5).length, icon: Trophy, color: "text-amber-500", bg: "bg-amber-50/50", border: "border-t-amber-500" },
   ];
 
   return (
     <div className="min-h-screen bg-slate-50/50 p-4 md:p-8 space-y-8 animate-in fade-in duration-700">
       
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-100 border-none px-3 mb-2">Talent Management</Badge>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight">Agent Directory</h1>
-          <p className="text-slate-500 font-medium mt-1">Audit professional rankings, verify credentials, and manage affiliations.</p>
-        </div>
+      {/* Header */}
+      <div>
+         <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-100 border-none px-3 mb-2">Talent Management</Badge>
+         <h1 className="text-4xl font-black text-slate-900 tracking-tight">Agent Directory</h1>
+         <p className="text-slate-500 font-medium">Categorized view of all registered agents and their affiliations.</p>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {stats.map((stat, i) => (
-          <div key={i} className={`group p-6 bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-t-4 ${stat.border}`}>
+          <div key={i} className={`group p-6 bg-white border border-slate-200 rounded-2xl shadow-sm border-t-4 ${stat.border}`}>
             <div className="flex justify-between items-start">
-              <div>
-                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-1">{stat.label}</p>
-                <h3 className="text-3xl font-black text-slate-900 tabular-nums tracking-tight">{stat.value}</h3>
-              </div>
-              <div className={`p-3 rounded-xl ${stat.bg} ${stat.color} shadow-sm group-hover:scale-110 transition-transform duration-500`}>
-                <stat.icon className="h-6 w-6" />
-              </div>
+               <div>
+                 <p className="text-[11px] font-bold text-slate-400 uppercase mb-1">{stat.label}</p>
+                 <h3 className="text-3xl font-black text-slate-900 tracking-tight">{stat.value}</h3>
+               </div>
+               <div className={`p-3 rounded-xl ${stat.bg} ${stat.color}`}><stat.icon className="h-6 w-6" /></div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Main Table Container */}
-      <div className="bg-white border border-slate-200 rounded-[2.5rem] shadow-xl shadow-slate-200/50 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between gap-4">
-          <div className="relative w-full md:w-96 group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within:text-indigo-600 transition-colors" />
+      {/* Search & Table */}
+      <div className="bg-white border border-slate-200 rounded-[2.5rem] shadow-xl overflow-hidden">
+        <div className="p-6 border-b border-slate-100 bg-white">
+          <div className="relative w-full md:w-96">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
             <Input 
-              placeholder="Search by agent name, BRN, or city..." 
-              className="pl-10 bg-white ring-2 focus:ring-indigo-500/20 border-indigo-500 transition-all rounded-xl placeholder:text-slate-400" 
+              placeholder="Search by name, city, or agency..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 rounded-xl border-slate-200 focus:border-indigo-500 ring-offset-0 focus-visible:ring-2 focus-visible:ring-indigo-500/20" 
             />
           </div>
-          <Button variant="outline" className="h-12 rounded-2xl border-slate-200 text-slate-100 font-bold px-6 transition-all">
-            <Filter className="h-4 w-4 mr-2" /> Advanced Filters
-          </Button>
         </div>
 
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="border-none hover:bg-transparent">
-                <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-[0.2em] py-6 px-8">Professional Identity</TableHead>
-                <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-[0.2em]">Affiliation</TableHead>
-                <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-[0.2em]">Rank</TableHead>
-                <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-[0.2em]">Performance</TableHead>
-                <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-[0.2em]">Compliance</TableHead>
-                <TableHead className="text-right font-bold text-slate-400 uppercase text-[10px] tracking-[0.2em] px-8">Manage</TableHead>
+              <TableRow className="bg-slate-50/50 hover:bg-slate-50/50">
+                <TableHead className="font-bold text-[10px] tracking-[0.2em] px-8 py-4">PROFESSIONAL IDENTITY</TableHead>
+                <TableHead className="font-bold text-[10px] tracking-[0.2em]">RANK</TableHead>
+                <TableHead className="font-bold text-[10px] tracking-[0.2em]">PERFORMANCE</TableHead>
+                <TableHead className="font-bold text-[10px] tracking-[0.2em]">COMPLIANCE</TableHead>
+                <TableHead className="text-right font-bold text-[10px] tracking-[0.2em] px-8">VIEW</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-32">
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="relative h-12 w-12">
-                        <div className="absolute inset-0 border-4 border-indigo-100 rounded-full"></div>
-                        <div className="absolute inset-0 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                <TableRow><TableCell colSpan={5} className="text-center py-32 font-bold text-slate-400 uppercase tracking-widest">Loading Records...</TableCell></TableRow>
+              ) : Object.keys(groupedAgents).length === 0 ? (
+                <TableRow><TableCell colSpan={5} className="text-center py-32 text-slate-400">No agents found matching your search.</TableCell></TableRow>
+              ) : Object.keys(groupedAgents).map((agencyName) => (
+                <React.Fragment key={agencyName}>
+                  {/* Agency Sub-header */}
+                  <TableRow className="bg-slate-50/80 hover:bg-slate-50/80 border-y border-slate-200">
+                    <TableCell colSpan={5} className="py-3 px-8">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-4 w-4 text-indigo-600" />
+                        <span className="font-black text-slate-700 uppercase text-xs tracking-widest">
+                          {agencyName} 
+                          <span className="ml-2 text-slate-400 font-medium lowercase">({groupedAgents[agencyName].length} agents)</span>
+                        </span>
                       </div>
-                      <p className="text-slate-400 font-black text-xs uppercase tracking-widest">Indexing Talent Pool...</p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : agents.map((agent) => (
-                <TableRow 
-                  key={agent._id} 
-                  className="border-b border-slate-50 hover:bg-slate-50/80 transition-all group cursor-pointer"
-                  onClick={() => openReview(agent._id)}
-                >
-                  <TableCell className="py-5 px-8">
-                    <div className="flex items-center gap-4">
-                      <div className="relative">
-                        <img 
-                          src={agent.profilePicture} 
-                          className="h-14 w-14 rounded-2xl object-cover border-2 border-white shadow-md group-hover:scale-105 transition-transform duration-300" 
-                          alt="" 
-                        />
-                        {agent.isVerified && (
-                          <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm">
-                            <ShieldCheck className="h-4 w-4 text-blue-600 fill-blue-50" />
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-black text-slate-900 text-base leading-none tracking-tight">{agent.fullName}</p>
-                        <p className="text-xs text-slate-400 font-medium mt-1.5">{agent.email}</p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="text-sm font-black text-slate-700 leading-tight">
-                        {agent.agency?.companyName || "Freelance Agent"}
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-bold uppercase flex items-center gap-1 mt-1">
-                        <MapPin className="h-2.5 w-2.5" /> {agent.serviceCity}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className="bg-slate-100 text-slate-700 font-black text-[10px] px-3 py-1 rounded-lg border-none shadow-sm uppercase tracking-tighter">
-                      {agent.agentRank}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-1 text-amber-500">
-                        {[...Array(5)].map((_, i) => (
-                          <Star 
-                            key={i} 
-                            className={`h-2.5 w-2.5 ${i < Math.floor(agent.rating) ? 'fill-current' : 'text-slate-200'}`} 
+                    </TableCell>
+                  </TableRow>
+
+                  {/* Agent Rows */}
+                  {groupedAgents[agencyName].map((agent) => (
+                    <TableRow 
+                      key={agent._id} 
+                      className="border-b border-slate-50 hover:bg-indigo-50/30 transition-all cursor-pointer group"
+                      onClick={() => router.push(`/admin/agents/${agent._id}`)}
+                    >
+                      <TableCell className="py-5 px-8">
+                        <div className="flex items-center gap-4">
+                          <img 
+                            src={agent.profilePicture || "/placeholder-user.png"} 
+                            className="h-12 w-12 rounded-xl object-cover shadow-sm border border-slate-100" 
+                            alt=""
                           />
-                        ))}
-                        <span className="text-xs font-black ml-1 text-slate-900">{agent.rating || "0.0"}</span>
-                      </div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-                        {agent.activeListings} Active Inventories
-                      </p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {agent.isVerified ? (
-                      <Badge className="bg-emerald-50 text-emerald-700 border-emerald-100 font-black text-[9px] px-3 py-1 rounded-xl uppercase tracking-widest shadow-sm">
-                        Verified
-                      </Badge>
-                    ) : (
-                      <Badge className="bg-slate-50 text-slate-300 border-slate-100 font-bold text-[9px] px-3 py-1 rounded-xl uppercase tracking-widest shadow-none">
-                        Unverified
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right px-8" onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50">
-                          <MoreVertical className="h-5 w-5" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-56 p-2 rounded-2xl shadow-2xl border-slate-100">
-                        <DropdownMenuItem 
-                          className="rounded-xl font-bold text-xs uppercase tracking-tight py-3 cursor-pointer"
-                          onClick={() => openReview(agent._id)}
-                        >
-                          <ExternalLink className="mr-2 h-4 w-4 text-indigo-600" /> Professional Review
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="rounded-xl font-bold text-xs uppercase tracking-tight py-3 text-red-600 cursor-pointer">
-                          <ShieldCheck className="mr-2 h-4 w-4" /> Revoke Certification
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
+                          <div>
+                            <p className="font-black text-slate-900 text-sm leading-none group-hover:text-indigo-600 transition-colors">{agent.fullName}</p>
+                            <div className="flex items-center gap-1 text-[10px] text-slate-400 mt-1 font-bold">
+                               <MapPin className="h-2.5 w-2.5" /> {agent.serviceCity}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className="bg-slate-100 text-slate-600 font-bold text-[9px] uppercase border-none shadow-none">
+                          {agent.agentRank || "Junior"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5">
+                           <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
+                           <span className="text-xs font-black text-slate-900">{agent.rating || "0.0"}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {agent.isVerified ? (
+                          <Badge className="bg-emerald-50 text-emerald-700 border-emerald-100 text-[9px] uppercase font-black">Verified</Badge>
+                        ) : (
+                          <Badge className="bg-slate-50 text-slate-300 text-[9px] uppercase font-bold">Pending</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right px-8">
+                         <Button variant="ghost" size="icon" className="rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                            <ChevronRight className="h-4 w-4" />
+                         </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </React.Fragment>
               ))}
             </TableBody>
           </Table>
         </div>
       </div>
-
-      <AgentDetailDrawer 
-        isOpen={isDrawerOpen} 
-        onClose={() => setIsDrawerOpen(false)} 
-        agentId={selectedAgentId} 
-        refresh={fetchAgents} 
-      />
     </div>
   );
 }
-
 
 export default AgentsPage;

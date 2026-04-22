@@ -469,6 +469,7 @@ export default function PostListingForm() {
 
   const form = useForm({
     resolver: zodResolver(formSchema),
+    shouldUnregister: false,
     defaultValues: {
       title: "", 
       description: "",
@@ -485,10 +486,10 @@ export default function PostListingForm() {
 
       community: "",
       area_loc: "",
-      subCommunity: undefined,
-      phase: undefined,
-      block: undefined,
-      building: undefined,
+      subCommunity: "",
+      phase: "",
+      block: "",
+      building: "",
       nearbyLandmarks: "",
       latitude: undefined,
       longitude: undefined,
@@ -539,7 +540,7 @@ export default function PostListingForm() {
   const watchArea          = form.watch("area");
   const watchMarlaSize     = form.watch("marlaSize");
 
-  const watchedAll = form.watch();
+  const v = form.getValues();
 
   // auto area conversion hint
   const areaHint = (() => {
@@ -1348,17 +1349,16 @@ const renderStep5 = () => {
   );
 
   const renderStep7 = () => {
-    // const v = form.watch();
-    const v = watchedAll;
+    const v = form.watch();
     const rows = [
-      ["Purpose",         v.purpose || "—"],
-      ["Category",        `${v.category} — ${v.propertyType}` || "—"],
+      ["Purpose",         watchPurpose || "—"],
+      ["Category",        watchCategory ? `${watchCategory} — ${v.propertyType}` : "—"],
       ["Title",           v.title || "—"],
       ["Area",            v.area ? `${v.area} ${v.areaUnit}${areaHint ? ` (${areaHint})` : ""}` : "—"],
       ["Bedrooms / Baths",!isPlot ? `${v.bedrooms} beds / ${v.bathrooms} baths` : "N/A"],
-      ["City",            v.city || "—"],
-      ["Location",        v.community || "—"],
-      ["Phase / Block",   [v.phase, v.block].filter(Boolean).join(", ") || "—"],
+      ["City",            watchedAll.city || "—"],
+      ["Location",        watchedAll.community || "—"],
+      ["Phase / Block",   [watchedAll.phase, watchedAll.block].filter(Boolean).join(", ") || "—"],
       ["Price",           formatPKR(v.price)],
       ["Price Label",     v.priceLabel || "—"],
       ["Completion",      v.completionStatus || "—"],
@@ -1385,11 +1385,6 @@ const renderStep5 = () => {
               By submitting, you confirm all details are accurate and you have the legal right to list this property.Our staff will review and approve it before it goes live.
             </p>
           </div>
-          {/* <div className="text-center mt-6">
-            <Button type="submit" size="lg" className="bg-[#147a32] hover:bg-[#0f5c25] text-white h-14 px-16 font-bold text-base rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-95 w-full md:w-auto">
-              🚀 Submit Property for Approval
-            </Button>
-          </div> */}
         </CardContent>
       </Card>
     );
