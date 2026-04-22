@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import FileUpload from "@/components/common/FileUpload"; // Assuming this is your path
+import FileUpload from "@/components/common/FileUpload"; 
 import {
   CheckCircle2,
   ChevronRight,

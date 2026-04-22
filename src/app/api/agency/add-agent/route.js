@@ -162,6 +162,11 @@ export async function POST(req) {
     await newAgent.save();
     console.log("Agent profile created:", newAgent._id);
 
+    // 8. Update User Profile
+   await User.findByIdAndUpdate(newUser._id, {
+      agentProfile: newAgent._id
+    });
+
     // 8. Update Agency Stats (Increment agent count)
     await Agency.findOneAndUpdate(
       { owner: session.user._id },
