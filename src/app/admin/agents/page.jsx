@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import AgentDetailDrawer from "@/components/admin/AgentDetailDrawer";
 
-export default function AgentsPage() {
+const AgentsPage = () => {
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedAgentId, setSelectedAgentId] = useState(null);
@@ -236,3 +236,6 @@ export default function AgentsPage() {
     </div>
   );
 }
+
+
+export default AgentsPage;
