@@ -2,7 +2,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "@/components/providers/AuthProvider";
 import { Toaster } from "sonner";
-import Navbar from "@/components/PublicNavbar";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -31,7 +30,6 @@ export default function RootLayout({
         cz-shortcut-listen="true"
       >
         <AuthProvider>
-          <Navbar />
           {children}
           <Toaster />
         </AuthProvider>

@@ -1,10 +1,10 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import Navbar from "@/components/PublicNavbar";
 
 // --- ICONS ---
 const SearchIcon = () => (
@@ -67,7 +67,6 @@ export default function HouzingHomePage() {
   return (
     <div className="min-h-screen bg-white font-sans">
 
-      <Navbar />
       {/* ── HERO SECTION ────────────────────────────────────────────────────── */}
       <section 
         className="relative min-h-[650px] flex items-center justify-center bg-slate-900 overflow-hidden"
