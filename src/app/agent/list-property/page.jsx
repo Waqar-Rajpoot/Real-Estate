@@ -146,7 +146,7 @@ const ICON_COLORS = {
 function SecHeader({ icon: Icon, title, subtitle, color = "blue" }) {
   return (
     <div className="flex items-center gap-3 mb-5">
-      <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${ICON_COLORS[color]}`}>
+      <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${ICON_COLORS[color]}`}>
         <Icon size={18} />
       </div>
       <div>
