@@ -165,3 +165,10 @@ body {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
+
+
+.custom-autocomplete {
+  --gmpx-border-radius: 8px;
+  --gmpx-border-color: #e2e8f0;
+  --gmpx-font-family: inherit;
+}

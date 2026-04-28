@@ -61,9 +61,9 @@ const AgentsPage = () => {
       
       {/* Header */}
       <div>
-         <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-100 border-none px-3 mb-2">Talent Management</Badge>
-         <h1 className="text-4xl font-black text-slate-900 tracking-tight">Agent Directory</h1>
-         <p className="text-slate-500 font-medium">Categorized view of all registered agents and their affiliations.</p>
+        <Badge className="bg-indigo-100 text-indigo-700 hover:bg-indigo-100 border-none px-3 mb-2">Talent Management</Badge>
+        <h1 className="text-4xl font-black text-slate-900 tracking-tight">Agent Directory</h1>
+        <p className="text-slate-500 font-medium">Categorized view of all registered agents and their affiliations.</p>
       </div>
 
       {/* Stats Grid */}
@@ -71,11 +71,11 @@ const AgentsPage = () => {
         {stats.map((stat, i) => (
           <div key={i} className={`group p-6 bg-white border border-slate-200 rounded-2xl shadow-sm border-t-4 ${stat.border}`}>
             <div className="flex justify-between items-start">
-               <div>
-                 <p className="text-[11px] font-bold text-slate-400 uppercase mb-1">{stat.label}</p>
-                 <h3 className="text-3xl font-black text-slate-900 tracking-tight">{stat.value}</h3>
-               </div>
-               <div className={`p-3 rounded-xl ${stat.bg} ${stat.color}`}><stat.icon className="h-6 w-6" /></div>
+              <div>
+                <p className="text-[11px] font-bold text-slate-400 uppercase mb-1">{stat.label}</p>
+                <h3 className="text-3xl font-black text-slate-900 tracking-tight">{stat.value}</h3>
+              </div>
+              <div className={`p-3 rounded-xl ${stat.bg} ${stat.color}`}><stat.icon className="h-6 w-6" /></div>
             </div>
           </div>
         ))}
@@ -143,7 +143,7 @@ const AgentsPage = () => {
                           <div>
                             <p className="font-black text-slate-900 text-sm leading-none group-hover:text-indigo-600 transition-colors">{agent.fullName}</p>
                             <div className="flex items-center gap-1 text-[10px] text-slate-400 mt-1 font-bold">
-                               <MapPin className="h-2.5 w-2.5" /> {agent.serviceCity}
+                              <MapPin className="h-2.5 w-2.5" /> {agent.serviceCity}
                             </div>
                           </div>
                         </div>
@@ -155,8 +155,8 @@ const AgentsPage = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1.5">
-                           <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
-                           <span className="text-xs font-black text-slate-900">{agent.rating || "0.0"}</span>
+                          <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
+                          <span className="text-xs font-black text-slate-900">{agent.rating || "0.0"}</span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -167,9 +167,9 @@ const AgentsPage = () => {
                         )}
                       </TableCell>
                       <TableCell className="text-right px-8">
-                         <Button variant="ghost" size="icon" className="rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                        <Button variant="ghost" size="icon" className="rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-all">
                             <ChevronRight className="h-4 w-4" />
-                         </Button>
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}

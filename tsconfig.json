@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-, "src/models/User.model.js", "src/app/api/auth/[...nextauth]/options.js", "src/app/api/auth/[...nextauth]/route.js", "src/lib/dbConnect.js", "src/app/(auth)/verify/[username]/page.jsx", "src/app/(auth)/sign-in/page.jsx", "src/app/agency/agency-register/page.jsx", "src/app/agency/add-agent/page.jsx", "src/app/agency/agents/page.jsx", "src/app/page.jsx", "src/app/layout.jsx"  ],
+, "src/models/User.model.js", "src/app/api/auth/[...nextauth]/options.js", "src/app/api/auth/[...nextauth]/route.js", "src/lib/dbConnect.js", "src/app/(auth)/verify/[username]/page.jsx", "src/app/(auth)/sign-in/page.jsx", "src/app/agency/agency-register/page.jsx", "src/app/agency/add-agent/page.jsx", "src/app/agency/agents/page.jsx", "src/app/page.jsx", "src/app/layout.jsx", "src/app/(auth)/forgot-password/page.jsx", "src/app/(auth)/reset-password/page.jsx", "src/app/api/forgot-password/route.js", "src/app/api/reset-password/route.js", "src/app/api/verify-code/route.js"  ],
   "exclude": ["node_modules"]
 }

@@ -3,10 +3,8 @@ import dbConnect from "@/lib/dbConnect";
 import User from "@/models/User.model";
 import Agent from "@/models/Agent.model";
 import Agency from "@/models/Agency.model";
-import bcrypt from "bcryptjs";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
-import { sendVerificationEmail } from "@/helper/sendEmail"; // Assuming you have this helper
 
 export async function POST(req) {
   try {
@@ -37,6 +35,35 @@ export async function POST(req) {
     }
 
     const agencyId = currentUser.agencyProfile;
+
+    // Check if the Agency exists
+    const agency = await Agency.findById(agencyId);
+    if (!agency) {
+      return NextResponse.json(
+        { message: "Agency not found." },
+        { status: 404 },
+      );
+    }
+
+    if (agency.verificationStatus !== "Verified") {
+      const statusMessages = {
+        Pending:
+          "Your agency account is currently under review. You can add agents once verified.",
+        Suspended:
+          "Your agency account has been suspended. Please contact support.",
+        Rejected:
+          "Your agency application was rejected. You cannot perform this action.",
+      };
+
+      return NextResponse.json(
+        {
+          message:
+            statusMessages[agency.verificationStatus] ||
+            "Your agency is not authorized to add agents.",
+        },
+        { status: 403 },
+      );
+    }
 
     const body = await req.json();
     const {
@@ -99,25 +126,16 @@ export async function POST(req) {
 
     if (existingAgent) {
       return NextResponse.json(
-        { message: "Agent with this Email, CNIC, or WhatsApp already exists." },
+        { message: "Agent with the same email, CNIC, or WhatsApp already exists." },
         { status: 400 },
       );
     }
 
-    // 4. Hash Password
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
-
-    // 5. Generate OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
     // 6. Create User Account for the Agent
-    // This allows the agent to log in separately later
-    console.log("Creating user account for agent:", emailLower);
     const newUser = await User.create({
       name: fullName,
       username: email.split("@")[0] + Math.floor(Math.random() * 1000),
-      email: email.toLowerCase(),
+      email: emailLower,
       password: password, // Will be hashed by the User model pre-save hook
       role: "Agent",
       phoneNumber,
@@ -126,15 +144,13 @@ export async function POST(req) {
       isVerified: true,
     });
 
-    console.log("User account created for agent:", newUser._id);
     // 7. Create Agent Profile
     const newAgent = new Agent({
       agency: agencyId, // Link to Agency model
       belongsToAgency: agencyId,
       user: newUser._id, // Link to the user object
       fullName,
-      email: email.toLowerCase(),
-      passwordHash,
+      email: emailLower,
       phoneNumber,
       whatsappNumber,
       cnic,
@@ -153,18 +169,15 @@ export async function POST(req) {
       propertyTypes: [],
       socialLinks: {},
       maxListings: 10,
-      registrationToken: otp,
-      registrationTokenExpiry: Date.now() + 48 * 60 * 60 * 1000,
       isActive: true,
       isVerified: true,
     });
 
     await newAgent.save();
-    console.log("Agent profile created:", newAgent._id);
 
     // 8. Update User Profile
-   await User.findByIdAndUpdate(newUser._id, {
-      agentProfile: newAgent._id
+    await User.findByIdAndUpdate(newUser._id, {
+      agentProfile: newAgent._id,
     });
 
     // 8. Update Agency Stats (Increment agent count)
@@ -173,22 +186,11 @@ export async function POST(req) {
       { $inc: { totalAgents: 1 } },
     );
 
-    // 9. Send Email
-    try {
-      await sendVerificationEmail({
-        email: newAgent.email,
-        emailType: "VERIFY",
-        username: newAgent.fullName,
-        verifyCode: otp,
-      });
-    } catch (emailErr) {
-      console.error("Email failed but agent created", emailErr);
-    }
 
     return NextResponse.json(
       {
         success: true,
-        message: "Agent registered successfully. OTP sent to their email.",
+        message: "Agent registered successfully.",
         agentId: newAgent._id,
       },
       { status: 201 },

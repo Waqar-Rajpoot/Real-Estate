@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { formSchema } from "@/schemas/property.schema";
+import PropertyMapPicker from "@/components/PropertyMapPicker";
 import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from "@/components/ui/form";
@@ -26,95 +27,6 @@ import {
   Building2, Layers, FileText, Shield, TrendingUp, Loader2, X, Rocket
 } from "lucide-react";
 
-// ─── ZOD SCHEMA (identical to multistep version) ──────────────────────────────
-const formSchema = z.object({
-  purpose: z.enum(["For Sale", "For Rent"], { required_error: "Purpose is required" }),
-  category: z.enum(["Residential", "Commercial", "Plots"], { required_error: "Category is required" }),
-  propertyType: z.string().min(1, "Property type is required"),
-  title: z.string().min(10, "Title must be at least 10 characters").max(150),
-  description: z.string().min(30, "Description must be at least 30 characters").max(5000),
-  facing: z.enum(["North","South","East","West","North-East","North-West","South-East","South-West"]).optional(),
-  completionStatus: z.enum(["Off-plan", "Ready"], { required_error: "Completion status is required" }),
-  condition: z.enum(["New", "Good", "Needs Renovation"]).optional(),
-  furnishingStatus: z.enum(["Furnished", "Unfurnished", "Partly Furnished"]).optional(),
-  occupancyStatus: z.enum(["Vacant", "Tenanted"]).optional(),
-  age: z.preprocess((v) => (v === "" || v == null ? undefined : Number(v)), z.number().min(0).optional()),
-  area: z.preprocess((v) => (v === "" || v == null ? undefined : Number(v)), z.number({ invalid_type_error: "Area is required" }).positive("Area must be greater than 0")),
-  areaUnit: z.enum(["Sqft", "Sqm", "Marla", "Kanal", "Acre", "Sqyd"], { required_error: "Unit is required" }),
-  marlaSize: z.preprocess((v) => (v === "" || v == null ? undefined : Number(v)), z.number().optional()),
-  bedrooms:     z.preprocess((v) => (v === "" || v == null ? 0 : Number(v)), z.number().min(0).default(0)),
-  bathrooms:    z.preprocess((v) => (v === "" || v == null ? 0 : Number(v)), z.number().min(0).default(0)),
-  parkingSpaces:z.preprocess((v) => (v === "" || v == null ? 0 : Number(v)), z.number().min(0).default(0)),
-  floors:       z.preprocess((v) => (v === "" || v == null ? undefined : Number(v)), z.number().min(0).optional()),
-  floorNumber:  z.preprocess((v) => (v === "" || v == null ? undefined : Number(v)), z.number().min(0).optional()),
-  kitchens:     z.preprocess((v) => (v === "" || v == null ? 1 : Number(v)), z.number().min(0).default(1)),
-  servantRooms: z.preprocess((v) => (v === "" || v == null ? 0 : Number(v)), z.number().min(0).default(0)),
-  storeRooms:   z.preprocess((v) => (v === "" || v == null ? 0 : Number(v)), z.number().min(0).default(0)),
-  drawingRooms: z.preprocess((v) => (v === "" || v == null ? 1 : Number(v)), z.number().min(0).default(1)),
-  diningRooms:  z.preprocess((v) => (v === "" || v == null ? 1 : Number(v)), z.number().min(0).default(1)),
-  city: z.string().min(1, "City is required"),
-  community: z.string().min(1, "Society / Community is required"),
-  area_loc: z.string().optional(),
-  subCommunity: z.string().optional(),
-  phase: z.string().optional(),
-  block: z.string().optional(),
-  building: z.string().optional(),
-  address: z.string().optional(),
-  nearbyLandmarks: z.string().optional(),
-  latitude:  z.preprocess((v) => (v === "" || v == null ? undefined : Number(v)), z.number().optional()),
-  longitude: z.preprocess((v) => (v === "" || v == null ? undefined : Number(v)), z.number().optional()),
-  mapEmbedUrl: z.string().optional(),
-  price: z.preprocess((v) => (v === "" || v == null ? undefined : Number(v)), z.number({ invalid_type_error: "Price is required" }).positive("Price must be greater than 0")),
-  currency: z.enum(["PKR", "AED", "USD"]).default("PKR"),
-  priceLabel: z.enum(["Fixed", "Starting From", "Price on Call"]).default("Fixed"),
-  isNegotiable: z.boolean().default(false),
-  rentFrequency: z.enum(["Daily", "Weekly", "Monthly", "Yearly"]).optional(),
-  isOnInstalments: z.boolean().default(false),
-  possessionPaid: z.boolean().default(false),
-  downPayment:            z.preprocess((v) => (v === "" || v == null ? undefined : Number(v)), z.number().positive().optional()),
-  instalmentPeriodMonths: z.preprocess((v) => (v === "" || v == null ? undefined : Number(v)), z.number().positive().optional()),
-  monthlyInstalment:      z.preprocess((v) => (v === "" || v == null ? undefined : Number(v)), z.number().positive().optional()),
-  membershipFee:          z.preprocess((v) => (v === "" || v == null ? undefined : Number(v)), z.number().positive().optional()),
-  boostLevel: z.enum(["None", "Standard", "Premium", "Platinum"]).default("None"),
-  expiresAt: z.string().optional(),
-  hasSwimmingPool: z.boolean().default(false),
-  hasGym: z.boolean().default(false),
-  hasCentralAC: z.boolean().default(false),
-  hasBalcony: z.boolean().default(false),
-  hasMaidRoom: z.boolean().default(false),
-  hasStudyRoom: z.boolean().default(false),
-  hasCoveredParking: z.boolean().default(false),
-  hasBuiltInWardrobes: z.boolean().default(false),
-  hasCCTV: z.boolean().default(false),
-  hasMosque: z.boolean().default(false),
-  gasAvailable: z.boolean().default(false),
-  isCorner: z.boolean().default(false),
-  hasElectricityBackup: z.boolean().default(false),
-  hasWasteDisposal: z.boolean().default(false),
-  hasBroadbandInternet: z.boolean().default(false),
-  isWaterFront: z.boolean().default(false),
-  isBoundaryWall: z.boolean().default(false),
-  isRunningBusiness: z.boolean().default(false),
-  hasBasement: z.boolean().default(false),
-  hasLift: z.boolean().default(false),
-  videoUrl: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
-  virtualTourUrl: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
-  images: z.array(z.string()).min(8, "At least 8 images are required").max(16, "Maximum 16 images allowed"),
-  ownerName: z.string().optional(),
-  ownerCNIC: z.string().min(13, "CNIC must be at least 13 digits").max(15).regex(/^[0-9-]+$/, "CNIC must contain only numbers"),
-  ownerEmail: z.string().email("Please enter a valid email address"),
-  ownerPhone: z.string().optional(),
-  marketingContract: z.string().min(1, "Marketing contract is required"),
-  developerName: z.string().optional(),
-  projectName: z.string().optional(),
-  expectedHandoverDate: z.string().optional(),
-  constructionProgress: z.preprocess((v) => (v === "" || v == null ? undefined : Number(v)), z.number().min(0).max(100).optional()),
-  projectStatus: z.enum(["Under Construction", "Finishing Stages", "Completed"]).optional(),
-  downPaymentPercentage: z.preprocess((v) => (v === "" || v == null ? undefined : Number(v)), z.number().min(0).max(100).optional()),
-  isPostHandoverAvailable: z.boolean().default(false),
-  metaTitle: z.string().max(70).optional(),
-  metaDescription: z.string().max(160).optional(),
-});
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 const PROPERTY_TYPES = {
@@ -122,7 +34,7 @@ const PROPERTY_TYPES = {
   Plots: ["Residential Plot","Commercial Plot","Agricultural Land","Industrial Plot","Plot File"],
   Commercial: ["Office","Shop","Building","Warehouse","Factory","Showroom","Labour Camp","Bulk Unit","Industrial Land","Mixed Use Land","Hotel Apartment","Other Commercial"],
 };
-const PK_CITIES = ["Karachi","Lahore","Islamabad","Rawalpindi","Faisalabad","Multan","Peshawar","Quetta","Sialkot","Gujranwala","Hyderabad","Abbottabad","Bahawalpur","Sargodha","Sukkur"];
+
 const SECTIONS  = [
   { id: "sec-purpose",   label: "Purpose & Type" },
   { id: "sec-area",      label: "Area & Rooms" },
@@ -206,11 +118,11 @@ export default function PostListingForm() {
       area: "", areaUnit: "Marla", marlaSize: 225,
       bedrooms: 0, bathrooms: 0, parkingSpaces: 0, floors: 0, floorNumber: 0,
       kitchens: 0, servantRooms: 0, storeRooms: 0, drawingRooms: 0, diningRooms: 0,
-      developerName: "", projectName: "", expectedHandoverDate: "", constructionProgress: undefined, projectStatus: "Under Construction", downPaymentPercentage: undefined,
+      developerName: "", projectName: "", expectedHandoverDate: "", constructionProgress: 0, projectStatus: "Under Construction", downPaymentPercentage: 0,
       city: "", community: "", area_loc: "", subCommunity: "", phase: "",
       block: "", building: "", nearbyLandmarks: "", address: "",
       latitude: 0, longitude: 0, mapEmbedUrl: "",
-      price: undefined, currency: "PKR", priceLabel: "Fixed",
+      price: "", currency: "PKR", priceLabel: "Fixed",
       isNegotiable: false, isOnInstalments: false, possessionPaid: false,
       boostLevel: "None", expiresAt: "",
       hasSwimmingPool: false, hasGym: false, hasCentralAC: false,
@@ -227,6 +139,17 @@ export default function PostListingForm() {
     },
     mode: "onSubmit",
   });
+
+
+  const handleMapUpdate = (data) => {
+    form.setValue("city", data.city || "");
+    form.setValue("community", data.community || "");
+    form.setValue("subCommunity", data.subCommunity || "");
+    form.setValue("address", data.formattedAddress || "");
+    form.setValue("latitude", data.lat);
+    form.setValue("longitude", data.lng);
+    if(data.googlePlaceId) form.setValue("googlePlaceId", data.googlePlaceId);
+  };
 
   const watchCategory     = form.watch("category");
   const watchAreaUnit     = form.watch("areaUnit");
@@ -262,72 +185,108 @@ export default function PostListingForm() {
     form.setValue("images", currentImages.filter((_, idx) => idx !== i), { shouldValidate: true });
   };
 
-  // ── submit ──────────────────────────────────────────────────────────────────
   async function onSubmit(values) {
-    try {
-      setIsSubmitting(true);
-      // ── payload shape is IDENTICAL to the old multistep form ───────────────
-      const payload = {
-        ...values,
-        location: {
-          city: values.city, community: values.community, area: values.area_loc,
-          subCommunity: values.subCommunity, phase: values.phase, block: values.block,
-          building: values.building, address: values.address,
-          nearbyLandmarks: values.nearbyLandmarks ? [values.nearbyLandmarks] : [],
-          coordinates: values.latitude && values.longitude
-            ? { type: "Point", coordinates: [values.longitude, values.latitude] } : undefined,
-          mapEmbedUrl: values.mapEmbedUrl,
-        },
-        features: {
-          hasSwimmingPool: values.hasSwimmingPool, hasGym: values.hasGym,
-          hasCentralAC: values.hasCentralAC, hasBalcony: values.hasBalcony,
-          hasMaidRoom: values.hasMaidRoom, hasStudyRoom: values.hasStudyRoom,
-          hasCoveredParking: values.hasCoveredParking, hasBuiltInWardrobes: values.hasBuiltInWardrobes,
-          hasCCTV: values.hasCCTV, hasMosque: values.hasMosque,
-          gasAvailable: values.gasAvailable, isCorner: values.isCorner,
-          hasElectricityBackup: values.hasElectricityBackup, hasWasteDisposal: values.hasWasteDisposal,
-          hasBroadbandInternet: values.hasBroadbandInternet, isWaterFront: values.isWaterFront,
-          isBoundaryWall: values.isBoundaryWall,
-        },
-        commercialDetails: {
-          isRunningBusiness: values.isRunningBusiness,
-          hasBasement: values.hasBasement, hasLift: values.hasLift,
-        },
-        paymentStatus: {
-          isOnInstalments: values.isOnInstalments, possessionPaid: values.possessionPaid,
-          downPayment: values.downPayment, instalmentPeriodMonths: values.instalmentPeriodMonths,
-          monthlyInstalment: values.monthlyInstalment, membershipFee: values.membershipFee,
-        },
-        legal: {
-          ownerName: values.ownerName, ownerCNIC: values.ownerCNIC,
-          ownerEmail: values.ownerEmail, ownerPhone: values.ownerPhone,
-          marketingContract: values.marketingContract,
-        },
-        offPlanDetails: isOffPlan ? {
-          developerName: values.developerName, projectName: values.projectName,
-          expectedHandoverDate: values.expectedHandoverDate,
-          constructionProgress: values.constructionProgress, projectStatus: values.projectStatus,
-          paymentPlan: {
-            downPaymentPercentage: values.downPaymentPercentage,
-            isPostHandoverAvailable: values.isPostHandoverAvailable,
-          },
-        } : undefined,
-        seo: { metaTitle: values.metaTitle, metaDescription: values.metaDescription },
-      };
+  try {
+    setIsSubmitting(true);
 
-      const response = await axios.post("/api/agent/properties/register", payload);
-      if (response.status === 201 || response.status === 200) {
-        toast.success("Property submitted successfully! Pending admin approval.");
-        form.reset();
-      } else {
-        toast.error("Submission failed. Please try again.");
-      }
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Submission failed. Please try again.");
-    } finally {
-      setIsSubmitting(false);
+    const payload = {
+      ...values,
+      location: {
+        city: values.city,
+        community: values.community,
+        area: values.area_loc,
+        subCommunity: values.subCommunity,
+        phase: values.phase,
+        block: values.block,
+        building: values.building,
+        address: values.address,
+        formattedAddress: values.address, 
+        googlePlaceId: values.googlePlaceId,
+        mapZoom: 16, 
+        nearbyLandmarks: values.nearbyLandmarks ? [values.nearbyLandmarks] : [],
+        
+        coordinates: values.latitude && values.longitude
+          ? {
+              type: "Point",
+              coordinates: [
+                parseFloat(values.longitude),
+                parseFloat(values.latitude)
+              ]
+            }
+          : undefined,
+        mapEmbedUrl: values.mapEmbedUrl,
+      },
+      features: {
+        hasSwimmingPool: values.hasSwimmingPool,
+        hasGym: values.hasGym,
+        hasCentralAC: values.hasCentralAC,
+        hasBalcony: values.hasBalcony,
+        hasMaidRoom: values.hasMaidRoom,
+        hasStudyRoom: values.hasStudyRoom,
+        hasCoveredParking: values.hasCoveredParking,
+        hasBuiltInWardrobes: values.hasBuiltInWardrobes,
+        hasCCTV: values.hasCCTV,
+        hasMosque: values.hasMosque,
+        gasAvailable: values.gasAvailable,
+        isCorner: values.isCorner,
+        hasElectricityBackup: values.hasElectricityBackup,
+        hasWasteDisposal: values.hasWasteDisposal,
+        hasBroadbandInternet: values.hasBroadbandInternet,
+        isWaterFront: values.isWaterFront,
+        isBoundaryWall: values.isBoundaryWall,
+      },
+      commercialDetails: {
+        isRunningBusiness: values.isRunningBusiness,
+        hasBasement: values.hasBasement,
+        hasLift: values.hasLift,
+      },
+      paymentStatus: {
+        isOnInstalments: values.isOnInstalments,
+        possessionPaid: values.possessionPaid,
+        downPayment: values.downPayment,
+        instalmentPeriodMonths: values.instalmentPeriodMonths,
+        monthlyInstalment: values.monthlyInstalment,
+        membershipFee: values.membershipFee,
+      },
+      legal: {
+        ownerName: values.ownerName,
+        ownerCNIC: values.ownerCNIC,
+        ownerEmail: values.ownerEmail,
+        ownerPhone: values.ownerPhone,
+        marketingContract: values.marketingContract,
+      },
+      offPlanDetails: isOffPlan ? {
+        developerName: values.developerName,
+        projectName: values.projectName,
+        expectedHandoverDate: values.expectedHandoverDate,
+        constructionProgress: values.constructionProgress,
+        projectStatus: values.projectStatus,
+        paymentPlan: {
+          downPaymentPercentage: values.downPaymentPercentage,
+          isPostHandoverAvailable: values.isPostHandoverAvailable,
+        },
+      } : undefined,
+      seo: { 
+        metaTitle: values.metaTitle, 
+        metaDescription: values.metaDescription 
+      },
+    };
+
+    const response = await axios.post("/api/agent/properties/register", payload);
+    
+    if (response.status === 201 || response.status === 200) {
+      toast.success("Property submitted successfully! Pending admin approval.");
+      form.reset();
+    } else {
+      toast.error("Submission failed. Please try again.");
     }
+  } catch (err) {
+    toast.error(err.response?.data?.message || "Submission failed. Please try again.");
+  } finally {
+    setIsSubmitting(false);
   }
+}
+
 
   function onInvalid(errors) {
     const firstKey = Object.keys(errors)[0];
@@ -349,7 +308,7 @@ export default function PostListingForm() {
           {SECTIONS.map(({ id, label }) => (
             <button key={id} type="button"
               onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
-              className="px-4 py-3.5 text-xs font-semibold whitespace-nowrap text-slate-500 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-500 transition-all flex-shrink-0">
+              className="px-4 py-3.5 text-xs font-semibold whitespace-nowrap text-slate-500 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-500 transition-all shrink-0">
               {label}
             </button>
           ))}
@@ -592,61 +551,119 @@ export default function PostListingForm() {
 
           {/* ══ 3. LOCATION ════════════════════════════════════════════════════ */}
           <div id="sec-location" className="scroll-mt-20">
-            <Card className="shadow-sm border-slate-100">
-              <CardContent className="pt-6">
-                <SecHeader icon={MapPin} title="Location & Address" subtitle="Where is the property located?" color="blue" />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <FormField control={form.control} name="city" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs font-semibold uppercase tracking-wider text-slate-500">City <span className="text-red-500">*</span></FormLabel>
-                      <FormControl>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <SelectTrigger className="border-slate-200"><SelectValue placeholder="Select city" /></SelectTrigger>
-                          <SelectContent className="bg-white">{PK_CITIES.map(c=><SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="community" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs font-semibold uppercase tracking-wider text-slate-500">Society / Community <span className="text-red-500">*</span></FormLabel>
-                      <FormControl><Input {...field} placeholder="e.g. DHA Phase 6, Bahria Town" className="border-slate-200" /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  {[["area_loc","Area / Sub-area","e.g. Gulberg III"],["subCommunity","Sub-community","e.g. Sector F-7"],["phase","Phase / Sector","e.g. Phase 6"],["block","Block","e.g. Block B"],["building","Building / Tower","e.g. Centaurus Tower A"],["nearbyLandmarks","Nearby Landmark","e.g. Near Packages Mall"]].map(([name,label,ph]) => (
-                    <FormField key={name} control={form.control} name={name} render={({ field }) => (
-                      <FormItem><FormLabel className="text-xs font-semibold uppercase tracking-wider text-slate-500">{label}</FormLabel>
-                        <FormControl><Input {...field} placeholder={ph} className="border-slate-200" /></FormControl></FormItem>
-                    )} />
-                  ))}
-                </div>
-                <FormField control={form.control} name="address" render={({ field }) => (
-                  <FormItem className="mb-4">
-                    <FormLabel className="text-xs font-semibold uppercase tracking-wider text-slate-500">Full Address</FormLabel>
-                    <FormControl><Textarea {...field} placeholder="Complete postal address..." className="border-slate-200 min-h-[70px]" /></FormControl>
-                  </FormItem>
-                )} />
-                <Separator className="my-4 bg-slate-100" />
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Map Coordinates (Optional)</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField control={form.control} name="latitude" render={({ field }) => (
-                    <FormItem><FormLabel className="text-xs font-semibold uppercase tracking-wider text-slate-500">Latitude</FormLabel>
-                      <FormControl><Input type="number" step="any" {...field} placeholder="e.g. 31.5204" className="border-slate-200" /></FormControl></FormItem>
-                  )} />
-                  <FormField control={form.control} name="longitude" render={({ field }) => (
-                    <FormItem><FormLabel className="text-xs font-semibold uppercase tracking-wider text-slate-500">Longitude</FormLabel>
-                      <FormControl><Input type="number" step="any" {...field} placeholder="e.g. 74.3587" className="border-slate-200" /></FormControl></FormItem>
-                  )} />
-                  <FormField control={form.control} name="mapEmbedUrl" render={({ field }) => (
-                    <FormItem className="md:col-span-2"><FormLabel className="text-xs font-semibold uppercase tracking-wider text-slate-500">Google Maps Embed URL</FormLabel>
-                      <FormControl><Input {...field} placeholder="https://maps.google.com/..." className="border-slate-200" /></FormControl></FormItem>
-                  )} />
-                </div>
-              </CardContent>
-            </Card>
+  <Card className="shadow-sm border-slate-100">
+    <CardContent className="pt-6">
+      <SecHeader 
+        icon={MapPin} 
+        title="Location & Address" 
+        subtitle="Search for a location or drop a pin on the map for precision" 
+        color="blue" 
+      />
+
+      {/* 1. THE DYNAMIC MAP PICKER */}
+      <div className="mb-6">
+        <PropertyMapPicker 
+          onLocationChange={handleMapUpdate}
+          defaultLocation={form.getValues("latitude") ? {
+            lat: form.getValues("latitude"),
+            lng: form.getValues("longitude")
+          } : null}
+        />
+      </div>
+
+      <Separator className="my-6 bg-slate-100" />
+
+      {/* 2. PRIMARY LOCATION FIELDS (Auto-filled by Map) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <FormField control={form.control} name="city" render={({ field }) => (
+          <FormItem>
+            <FormLabel className="text-xs font-semibold uppercase tracking-wider text-slate-500">City <span className="text-red-500">*</span></FormLabel>
+            <FormControl>
+              <Input {...field} readOnly className="bg-slate-50 border-slate-200 cursor-not-allowed font-medium" placeholder="Detected from map..." />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        <FormField control={form.control} name="community" render={({ field }) => (
+          <FormItem>
+            <FormLabel className="text-xs font-semibold uppercase tracking-wider text-slate-500">Society / Community <span className="text-red-500">*</span></FormLabel>
+            <FormControl>
+              <Input {...field} placeholder="e.g. DHA Phase 6, Bahria Town" className="border-slate-200" />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        {/* 3. SUB-LOCATION DETAILS (Dynamic Mapping) */}
+        {[
+          ["area_loc", "Area / Sub-area", "e.g. Gulberg III"],
+          ["subCommunity", "Sub-community", "e.g. Sector F-7"],
+          ["phase", "Phase / Sector", "e.g. Phase 6"],
+          ["block", "Block", "e.g. Block B"],
+          ["building", "Building / Tower", "e.g. Centaurus Tower A"],
+          ["nearbyLandmarks", "Nearby Landmark", "e.g. Near Packages Mall"]
+        ].map(([name, label, ph]) => (
+          <FormField key={name} control={form.control} name={name} render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs font-semibold uppercase tracking-wider text-slate-500">{label}</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder={ph} className="border-slate-200" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+        ))}
+      </div>
+
+      {/* 4. FULL ADDRESS & EMBED URL */}
+      <div className="space-y-4">
+        <FormField control={form.control} name="address" render={({ field }) => (
+          <FormItem>
+            <FormLabel className="text-xs font-semibold uppercase tracking-wider text-slate-500">Full Standardized Address</FormLabel>
+            <FormControl>
+              <Textarea 
+                {...field} 
+                readOnly 
+                className="border-slate-200 min-h-17.5 bg-slate-50 italic text-slate-600" 
+                placeholder="Full address will be generated from map selection..." 
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        <FormField control={form.control} name="mapEmbedUrl" render={({ field }) => (
+          <FormItem>
+            <FormLabel className="text-xs font-semibold uppercase tracking-wider text-slate-500">Google Maps Embed URL (Optional)</FormLabel>
+            <FormControl>
+              <Input {...field} placeholder="https://www.google.com/maps/embed?pb=..." className="border-slate-200" />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+      </div>
+
+      {/* 5. COORDINATES FOOTER */}
+      <div className="mt-6 flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Live GPS Feed</span>
+        </div>
+        <div className="flex gap-6">
+          <div className="flex flex-col items-end">
+            <span className="text-[9px] text-slate-400 uppercase font-bold">Latitude</span>
+            <span className="text-xs font-mono font-semibold text-blue-600">{form.watch("latitude") || "0.000000"}</span>
           </div>
+          <div className="flex flex-col items-end">
+            <span className="text-[9px] text-slate-400 uppercase font-bold">Longitude</span>
+            <span className="text-xs font-mono font-semibold text-blue-600">{form.watch("longitude") || "0.000000"}</span>
+          </div>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+</div>
 
           {/* ══ 4. PRICING ═════════════════════════════════════════════════════ */}
           <div id="sec-pricing" className="scroll-mt-20">

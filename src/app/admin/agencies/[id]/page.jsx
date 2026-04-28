@@ -7,7 +7,6 @@ import {
   MapPin,
   Phone,
   Mail,
-  Calendar,
   ShieldCheck,
   ExternalLink,
   User,
@@ -18,6 +17,8 @@ import {
   Eye,
   MousePointer2,
   CreditCard,
+  AlertCircle,
+  Ban,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
 export default function AgencyDetails() {
@@ -36,6 +46,11 @@ export default function AgencyDetails() {
   const [agency, setAgency] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+
+  // NEW STATE FOR REASONS
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState("");
+  const [reason, setReason] = useState("");
 
   useEffect(() => {
     fetchAgencyDetails();
@@ -54,18 +69,38 @@ export default function AgencyDetails() {
     }
   };
 
-  const updateStatus = async (newStatus) => {
+  // HANDLE STATUS SELECTION
+  const handleStatusChange = (newStatus) => {
+    if (newStatus === "Rejected" || newStatus === "Suspended") {
+      setPendingStatus(newStatus);
+      setIsDialogOpen(true);
+    } else {
+      performUpdate(newStatus);
+    }
+  };
+
+  // FINAL API CALL
+  const performUpdate = async (status, reasonText = "") => {
     setUpdating(true);
     try {
+      const payload = {
+        status,
+        rejectionReason: status === "Rejected" ? reasonText : undefined,
+        suspensionReason: status === "Suspended" ? reasonText : undefined,
+      };
+
       const res = await fetch(`/api/admin/agencies/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify(payload),
       });
+
       const data = await res.json();
       if (data.success) {
         setAgency(data.agency);
-        toast.success(`Status updated to ${newStatus}`);
+        toast.success(`Agency status updated to ${status}`);
+        setIsDialogOpen(false);
+        setReason("");
       }
     } catch (error) {
       console.error(error);
@@ -87,7 +122,7 @@ export default function AgencyDetails() {
     );
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-20 max-w-7xl mx-auto">
+    <div className="space-y-6 animate-in fade-in duration-500 pb-20 max-w-7xl mx-auto px-4 md:px-0">
       {/* ── HEADER & STATUS CONTROL ─────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
         <Button
@@ -103,8 +138,8 @@ export default function AgencyDetails() {
             Update Status:
           </span>
           <Select
-            onValueChange={updateStatus}
-            defaultValue={agency.verificationStatus}
+            onValueChange={handleStatusChange}
+            value={agency.verificationStatus}
             disabled={updating}
           >
             <SelectTrigger className="w-40 h-9 rounded-xl font-bold text-xs border-slate-200 focus:ring-blue-500/10">
@@ -120,12 +155,53 @@ export default function AgencyDetails() {
                   >
                     {status}
                   </SelectItem>
-                ),
+                )
               )}
             </SelectContent>
           </Select>
         </div>
       </div>
+
+      {/* ── REASON DIALOG BOX ─────────────────────────────────────────── */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="bg-white rounded-3xl sm:max-w-106.25">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black text-slate-900">
+              Agency {pendingStatus}
+            </DialogTitle>
+            <DialogDescription className="text-slate-500 font-medium">
+              Please provide a reason for the {pendingStatus.toLowerCase()} status. This will be visible to the agency.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Textarea
+              placeholder={`Type the reason for ${pendingStatus.toLowerCase()} here...`}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              className="rounded-2xl border-slate-200 min-h-30 focus:ring-blue-500/10"
+            />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setIsDialogOpen(false);
+                setReason("");
+              }}
+              className="font-bold rounded-xl"
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={!reason.trim() || updating}
+              onClick={() => performUpdate(pendingStatus, reason)}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl"
+            >
+              Confirm {pendingStatus}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* ── LEFT COLUMN: BRAND & OWNER ─────────────────────────────────── */}
@@ -214,8 +290,34 @@ export default function AgencyDetails() {
           </div>
         </div>
 
-        {/* ── RIGHT COLUMN: STATS & DOCS ─────────────────────────────────── */}
+        {/* ── RIGHT COLUMN: STATS, REASONS & DOCS ────────────────────────── */}
         <div className="lg:col-span-2 space-y-6">
+          
+          {/* DISPLAY REASON ALERT IF REJECTED OR SUSPENDED */}
+          {agency.verificationStatus === "Rejected" && agency.rejectionReason && (
+            <div className="bg-red-50 border border-red-100 rounded-2xl p-5 flex items-start gap-4">
+              <AlertCircle className="text-red-600 shrink-0 mt-0.5" size={20} />
+              <div>
+                <p className="text-[10px] font-black text-red-600 uppercase tracking-widest">Rejection Reason</p>
+                <p className="text-sm font-bold text-red-900 mt-1 leading-relaxed">
+                  {agency.rejectionReason}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {agency.verificationStatus === "Suspended" && agency.suspensionReason && (
+            <div className="bg-slate-100 border border-slate-200 rounded-2xl p-5 flex items-start gap-4">
+              <Ban className="text-slate-600 shrink-0 mt-0.5" size={20} />
+              <div>
+                <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Suspension Reason</p>
+                <p className="text-sm font-bold text-slate-900 mt-1 leading-relaxed">
+                  {agency.suspensionReason}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Performance Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <StatMini

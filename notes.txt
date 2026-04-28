@@ -1,0 +1,537 @@
+Here are the complete Next.js implementation steps with exact file locations.
+
+---
+
+**Project structure for this feature**
+
+```
+src/
+  app/
+    properties/
+      [id]/
+        page.jsx                     ← Property detail page
+    api/
+      leads/
+        whatsapp-click/
+          route.js                   ← API route to log lead
+        [leadId]/
+          forward/
+            route.js                 ← API route to forward lead
+  components/
+    property/
+      RegisterInterestButton.jsx     ← Client component for the button
+  lib/
+    whatsapp.js                      ← URL generator utility
+    db.js                            ← MongoDB connection
+  models/
+    lead.model.js                    ← Lead mongoose schema
+  middleware.js                      ← Route protection
+.env.local                           ← Environment variables
+```
+
+---
+
+**Step 1 — Environment variable**
+
+`.env.local`:
+
+```env
+ADMIN_WHATSAPP_NUMBER=923001234567
+NEXT_PUBLIC_SITE_URL=https://leadstokeys.com
+```
+
+Note: `NEXT_PUBLIC_` prefix makes the variable available in the browser. The admin number does not need `NEXT_PUBLIC_` because it is only used server-side inside the API route. The site URL needs `NEXT_PUBLIC_` because it is used in the client-side URL generator.
+
+---
+
+**Step 2 — WhatsApp URL generator utility**
+
+`src/lib/whatsapp.js`:
+
+```js
+/**
+ * Generates a WhatsApp deep link with a pre-filled message
+ * containing the property title and listing URL.
+ * Runs on the CLIENT side only.
+ *
+ * @param {Object} property
+ * @param {string} property._id
+ * @param {string} property.title
+ * @returns {string} WhatsApp URL
+ */
+ 
+export function generateWhatsAppLeadURL(property) {
+  const adminNumber = process.env.NEXT_PUBLIC_ADMIN_WHATSAPP_NUMBER;
+  const siteURL = process.env.NEXT_PUBLIC_SITE_URL;
+
+  const propertyURL = `${siteURL}/properties/${property._id}`;
+
+  const message = [
+    `Hi! I'm interested in *${property.title}* listed on Leads to Keys.`,
+    ``,
+    propertyURL,
+    ``,
+    `*Kindly do not edit this message to ensure your inquiry is received correctly.*`,
+  ].join("\n");
+
+  const encoded = encodeURIComponent(message);
+
+  return `https://api.whatsapp.com/send/?phone=${adminNumber}&text=${encoded}&type=phone_number&app_absent=0`;
+}
+```
+
+Update `.env.local` to add the public prefix for client-side use:
+
+```env
+NEXT_PUBLIC_ADMIN_WHATSAPP_NUMBER=923001234567
+NEXT_PUBLIC_SITE_URL=https://leadstokeys.com
+MONGODB_URI=mongodb+srv://...
+```
+
+---
+
+**Step 3 — Lead model**
+
+`src/models/lead.model.js`:
+
+```js
+import mongoose from "mongoose";
+
+const leadSchema = new mongoose.Schema(
+  {
+    propertyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Property",
+      required: true,
+      index: true,
+    },
+    agentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+      index: true,
+    },
+    agencyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Agency",
+      default: null,
+      index: true,
+    },
+    channel: {
+      type: String,
+      enum: ["WhatsApp", "Call", "Form"],
+      default: "WhatsApp",
+    },
+    source: {
+      type: String,
+      enum: ["PropertyDetail", "SearchResults", "AgentProfile", "SharedLink"],
+      default: "PropertyDetail",
+    },
+    status: {
+      type: String,
+      enum: ["New", "Contacted", "Forwarded", "Converted", "Closed"],
+      default: "New",
+      index: true,
+    },
+    adminNote: {
+      type: String,
+      default: null,
+    },
+    forwardedToAgentAt: {
+      type: Date,
+      default: null,
+    },
+  },
+  { timestamps: true }
+);
+
+// Admin inbox — newest unhandled leads first
+leadSchema.index({ status: 1, createdAt: -1 });
+
+// Agent's forwarded leads
+leadSchema.index({ agentId: 1, status: 1 });
+
+const Lead = mongoose.models.Lead || mongoose.model("Lead", leadSchema);
+
+export default Lead;
+```
+
+The `mongoose.models.Lead || mongoose.model(...)` pattern is required in Next.js to prevent "model already registered" errors caused by Hot Module Replacement in development.
+
+---
+
+**Step 4 — MongoDB connection utility**
+
+`src/lib/db.js`:
+
+```js
+import mongoose from "mongoose";
+
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  throw new Error("Please define MONGODB_URI in .env.local");
+}
+
+// Cache the connection across hot reloads in development
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
+export async function connectDB() {
+  if (cached.conn) return cached.conn;
+
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(MONGODB_URI, {
+      bufferCommands: false,
+    });
+  }
+
+  cached.conn = await cached.promise;
+  return cached.conn;
+}
+```
+
+---
+
+**Step 5 — API route to log the WhatsApp lead click**
+
+`src/app/api/leads/whatsapp-click/route.js`:
+
+```js
+import { NextResponse } from "next/server";
+import { connectDB } from "@/lib/db";
+import Lead from "@/models/lead.model";
+
+export async function POST(request) {
+  try {
+    const body = await request.json();
+    const { propertyId, agentId, agencyId, source } = body;
+
+    if (!propertyId) {
+      return NextResponse.json(
+        { success: false, message: "propertyId is required" },
+        { status: 400 }
+      );
+    }
+
+    await connectDB();
+
+    const lead = await Lead.create({
+      propertyId,
+      agentId:  agentId  || null,
+      agencyId: agencyId || null,
+      channel: "WhatsApp",
+      source: source || "PropertyDetail",
+      status: "New",
+    });
+
+    return NextResponse.json(
+      { success: true, leadId: lead._id },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error("WhatsApp lead log error:", error.message);
+    // Return 500 but the client ignores this — it never blocks the redirect
+    return NextResponse.json(
+      { success: false, message: "Failed to log lead" },
+      { status: 500 }
+    );
+  }
+}
+```
+
+---
+
+**Step 6 — API route to forward a lead to agent (admin action)**
+
+`src/app/api/leads/[leadId]/forward/route.js`:
+
+```js
+import { NextResponse } from "next/server";
+import { connectDB } from "@/lib/db";
+import Lead from "@/models/lead.model";
+import { verifyAdminToken } from "@/lib/auth"; // your existing auth helper
+
+export async function PUT(request, { params }) {
+  try {
+    // Verify admin JWT from cookie
+    const admin = await verifyAdminToken(request);
+    if (!admin) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const { leadId } = params;
+    const body = await request.json();
+    const { note } = body;
+
+    await connectDB();
+
+    const lead = await Lead.findByIdAndUpdate(
+      leadId,
+      {
+        status: "Forwarded",
+        forwardedToAgentAt: new Date(),
+        adminNote: note || null,
+      },
+      { new: true }
+    ).populate("propertyId agentId agencyId");
+
+    if (!lead) {
+      return NextResponse.json(
+        { success: false, message: "Lead not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true, lead });
+  } catch (error) {
+    console.error("Forward lead error:", error.message);
+    return NextResponse.json(
+      { success: false, message: "Server error" },
+      { status: 500 }
+    );
+  }
+}
+```
+
+---
+
+**Step 7 — Register Interest button component**
+
+This must be a Client Component because it handles click events and calls `window.open`.
+
+`src/components/property/RegisterInterestButton.jsx`:
+
+```jsx
+"use client";
+
+import { MessageCircle } from "lucide-react";
+import { generateWhatsAppLeadURL } from "@/lib/whatsapp";
+
+/**
+ * Fires a fire-and-forget lead log to the backend,
+ * then opens WhatsApp with a pre-filled message to the admin.
+ *
+ * @param {Object} property  - Full property object from the server component
+ */
+export default function RegisterInterestButton({ property }) {
+
+  async function logLead() {
+    try {
+      // Fire and forget — no await, never blocks the WhatsApp redirect
+      fetch("/api/leads/whatsapp-click", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          propertyId: property._id,
+          agentId:    property.seller?._id   || null,
+          agencyId:   property.agencyId      || null,
+          source:     "PropertyDetail",
+        }),
+      });
+    } catch {
+      // Silent fail — lead logging must never block the user
+    }
+  }
+
+  function handleClick() {
+    // 1. Log the lead (fire and forget)
+    logLead();
+
+    // 2. Build and open the WhatsApp URL
+    const url = generateWhatsAppLeadURL(property);
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <button
+        onClick={handleClick}
+        className="flex items-center justify-center gap-2 w-full
+                   bg-green-600 hover:bg-green-700 active:bg-green-800
+                   text-white font-semibold py-3 px-6 rounded-xl
+                   transition-all duration-200 shadow-md"
+      >
+        <MessageCircle className="w-5 h-5" />
+        Register Interest via WhatsApp
+      </button>
+
+      <p className="text-xs text-center text-gray-500">
+        You will be connected with our team who will assist you with this property.
+      </p>
+    </div>
+  );
+}
+```
+
+---
+
+**Step 8 — Property detail page (Server Component)**
+
+`src/app/properties/[id]/page.jsx`:
+
+```jsx
+import { notFound } from "next/navigation";
+import { connectDB } from "@/lib/db";
+import { Property } from "@/models/property.model";
+import RegisterInterestButton from "@/components/property/RegisterInterestButton";
+
+// This is a Server Component — data fetching happens here
+export default async function PropertyDetailPage({ params }) {
+  await connectDB();
+
+  const property = await Property
+    .findOne({ _id: params.id, status: "APPROVED", isDeleted: false })
+    .populate("seller", "name phoneNumber profilePicture")
+    .lean();
+
+  if (!property) notFound();
+
+  // Convert ObjectIds to strings — required before passing to Client Components
+  const serialized = JSON.parse(JSON.stringify(property));
+
+  return (
+    <main className="max-w-6xl mx-auto px-4 py-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+        {/* Left column — images and details */}
+        <div className="lg:col-span-2">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            {serialized.title}
+          </h1>
+          <p className="text-gray-500 mb-4">
+            {serialized.address}, {serialized.city}
+          </p>
+          <p className="text-3xl font-bold text-gray-900 mb-6">
+            {serialized.currency} {serialized.price.toLocaleString("en-PK")}
+          </p>
+          <p className="text-gray-700 leading-relaxed">
+            {serialized.description}
+          </p>
+        </div>
+
+        {/* Right column — contact / CTA */}
+        <div className="lg:col-span-1">
+          <div className="sticky top-24 bg-white border border-gray-200
+                          rounded-2xl p-6 shadow-sm flex flex-col gap-4">
+
+            {/* Agent info */}
+            <div className="flex items-center gap-3">
+              <img
+                src={serialized.seller?.profilePicture || "/placeholder-avatar.png"}
+                alt={serialized.seller?.name}
+                className="w-12 h-12 rounded-full object-cover"
+              />
+              <div>
+                <p className="font-semibold text-gray-900">
+                  {serialized.seller?.name}
+                </p>
+                <p className="text-sm text-gray-500">Listed by this agent</p>
+              </div>
+            </div>
+
+            <hr className="border-gray-100" />
+
+            {/* Register Interest button — Client Component */}
+            <RegisterInterestButton property={serialized} />
+
+          </div>
+        </div>
+
+      </div>
+    </main>
+  );
+}
+```
+
+---
+
+**Step 9 — What the admin receives on WhatsApp**
+
+When a client clicks the button on a listing for "10 Marla House — F-10 Markaz", the admin's WhatsApp receives exactly this message:
+
+```
+Hi! I'm interested in *10 Marla House — F-10 Markaz* listed on Leads to Keys.
+
+https://leadstokeys.com/properties/64f3a2b1c9e77
+
+*Kindly do not edit this message to ensure your inquiry is received correctly.*
+```
+
+The admin opens the link, reviews the property, chats with the client, qualifies the lead, marks it as `Forwarded` in the admin dashboard, and then manually shares the agent's actual WhatsApp with the client to close the deal.
+
+---
+
+**Step 10 — Admin dashboard lead inbox (fetch call)**
+
+In your admin leads page, fetch new leads like this:
+
+`src/app/admin/leads/page.jsx`:
+
+```jsx
+import { connectDB } from "@/lib/db";
+import Lead from "@/models/lead.model";
+
+export default async function AdminLeadsPage() {
+  await connectDB();
+
+  const leads = await Lead
+    .find({ status: "New" })
+    .populate("propertyId", "title city price")
+    .populate("agentId",    "name phoneNumber")
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const serialized = JSON.parse(JSON.stringify(leads));
+
+  return (
+    <div className="p-6">
+      <h1 className="text-xl font-bold mb-6">New WhatsApp Leads</h1>
+      <div className="flex flex-col gap-4">
+        {serialized.map((lead) => (
+          <div key={lead._id}
+               className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+            <p className="font-semibold text-gray-900">
+              {lead.propertyId?.title || "Unknown property"}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              {lead.propertyId?.city} · {lead.channel} · {new Date(lead.createdAt).toLocaleString()}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              Agent: {lead.agentId?.name || "Unassigned"}
+            </p>
+            <div className="mt-4 flex gap-3">
+              <span className="text-xs bg-yellow-100 text-yellow-700
+                               px-3 py-1 rounded-full font-medium">
+                {lead.status}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+**Summary of all files created**
+
+| File | Purpose |
+|---|---|
+| `.env.local` | Admin WhatsApp number + site URL |
+| `src/lib/whatsapp.js` | URL generator utility |
+| `src/lib/db.js` | MongoDB connection with HMR cache |
+| `src/models/lead.model.js` | Lead schema |
+| `src/app/api/leads/whatsapp-click/route.js` | Log the click server-side |
+| `src/app/api/leads/[leadId]/forward/route.js` | Admin marks lead as forwarded |
+| `src/components/property/RegisterInterestButton.jsx` | Client component button |
+| `src/app/properties/[id]/page.jsx` | Server component property detail page |
+| `src/app/admin/leads/page.jsx` | Admin lead inbox |

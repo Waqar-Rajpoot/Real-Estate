@@ -1,10 +1,11 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+// import Navbar from "@/components/PublicNavbar";
+import RegisterInterestButton from "@/components/property/RegisterInterestButton";
 
 // --- ICONS ---
 const SearchIcon = () => (
@@ -26,7 +27,7 @@ const PROPERTY_TYPES = [
   'Hotel Apartment', 'Land', 'Floor', 'Building', 'Office', 'Shop', 'Warehouse'
 ];
 
-export default function HouzingHomePage() {
+export default function HomePage() {
   const router = useRouter();
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -67,6 +68,7 @@ export default function HouzingHomePage() {
   return (
     <div className="min-h-screen bg-white font-sans">
 
+      {/* <Navbar /> */}
       {/* ── HERO SECTION ────────────────────────────────────────────────────── */}
       <section 
         className="relative min-h-[650px] flex items-center justify-center bg-slate-900 overflow-hidden"
@@ -206,7 +208,6 @@ const BathIcon = () => <svg className="w-4 h-4 mr-1" fill="none" stroke="current
 const AreaIcon = () => <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>;
 
 function PropertyCard({ property }) {
-  // Extracting data based on your specific object structure
   const propertyId = property._id?.$oid || property._id;
   const mainImage = property.images?.[0]?.originalUrl || "/placeholder-house.jpg";
   const displayPrice = property.price?.toLocaleString();
@@ -225,12 +226,10 @@ function PropertyCard({ property }) {
             className="object-cover transition-transform duration-700 group-hover:scale-110"
             priority={property.isFeatured}
           />
-          {/* Badge */}
           <div className="absolute top-4 left-4 bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg z-10">
             {property.purpose}
           </div>
           
-          {/* Price Overlay */}
           <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-10">
             <p className="text-white font-black text-xl">
               {property.currency} {displayPrice}
@@ -239,8 +238,7 @@ function PropertyCard({ property }) {
           </div>
         </div>
         
-        <div className="p-5 flex flex-col flex-grow">
-          {/* Property Category/Type */}
+        <div className="p-5 flex flex-col grow">
           <span className="text-blue-600 text-[10px] font-bold uppercase tracking-wider mb-1">
             {property.category} • {property.propertyType}
           </span>
@@ -253,7 +251,6 @@ function PropertyCard({ property }) {
             <MapPinIcon /> {fullAddress}
           </p>
 
-          {/* Detailed Specs Row */}
           <div className="flex items-center gap-4 text-gray-600 text-sm mb-4 pt-2 border-t border-gray-50">
             <div className="flex items-center">
               <BedIcon />
@@ -269,14 +266,16 @@ function PropertyCard({ property }) {
             </div>
           </div>
           
-          <div className="mt-auto pt-4 border-t border-gray-50 flex justify-between items-center">
-            <div className="flex flex-col">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Condition</span>
-              <span className="text-xs font-bold text-gray-700">{property.condition}</span>
-            </div>
-            <div className="bg-gray-100 text-gray-900 p-2 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-all">
-              <SearchIcon />
-            </div>
+          {/* ── WHATSAPP BUTTON INTEGRATION ── */}
+          <div 
+            className="mt-auto pt-4"
+            onClick={(e) => {
+              // This prevents the <Link> from navigating when clicking the button area
+              e.preventDefault(); 
+              e.stopPropagation();
+            }}
+          >
+            <RegisterInterestButton property={property} compact={true} />
           </div>
         </div>
       </div>

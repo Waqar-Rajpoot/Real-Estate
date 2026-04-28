@@ -171,7 +171,7 @@ const AgenciesPage = () => {
                   <TableCell className="px-8 py-4">
                     <div className="flex items-center gap-4">
                       {/* Relative container is required for the 'fill' property */}
-                      <div className="relative h-10 w-10 rounded-lg border border-slate-100 bg-white overflow-hidden flex-shrink-0 group-hover:border-blue-200 transition-colors">
+                      <div className="relative h-10 w-10 rounded-lg border border-slate-100 bg-white overflow-hidden shrink-0 group-hover:border-blue-200 transition-colors">
                         <Image
                           src={agency.companyLogo || "/placeholder-logo.png"} // Fallback if logo is missing
                           alt={`${agency.companyName} logo`}

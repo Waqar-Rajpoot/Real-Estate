@@ -27,9 +27,9 @@ const AgentNavbar = () => {
             href="/agent/dashboard"
             className="flex items-center gap-2.5 shrink-0"
           >
-            <div className="relative w-14 h-14 bg-white rounded-lg shadow-sm overflow-hidden shrink-0">
+            <div className="relative w-18 h-18 shrink-0">
               <Image
-                src="/leadstokey-logo.jpeg"
+                src="/logo.01.svg"
                 alt="LeadsToKey"
                 fill
                 className="object-contain p-0.5"

@@ -15,16 +15,9 @@ const agentSchema = new mongoose.Schema({
     required: [true, 'Agent name is required'],
     trim: true,
   },
-  slug: {
-    type: String,
-    unique: true,
-    lowercase: true,
-    trim: true,
-    // e.g. "ahmed-khan" → used in /agents/ahmed-khan
-  },
   email: {
     type: String,
-    required: [true, 'Agent email is required'],
+    required: [true, 'Email is required for login and notifications'],
     unique: true,
     lowercase: true,
     trim: true,
@@ -58,35 +51,12 @@ const agentSchema = new mongoose.Schema({
   },
 
   // ─── AUTHENTICATION ───────────────────────────────────────────────────────
-  passwordHash: {
-    type: String,
-    required: true,
-    select: false,
-  },
-  emailVerified: {
-    type: Boolean,
-    default: false,
-  },
+
   phoneVerified: {
     type: Boolean,
     default: false,
   },
-  registrationToken: {
-    type: String,
-    select: false,
-  },
-  registrationTokenExpiry: {
-    type: Date,
-    select: false,
-  },
-  passwordResetToken: {
-    type: String,
-    select: false,
-  },
-  passwordResetExpiry: {
-    type: Date,
-    select: false,
-  },
+
   lastLoginAt: {
     type: Date, // track last login for activity badges
   },
@@ -137,7 +107,6 @@ const agentSchema = new mongoose.Schema({
   // ─── ROLE & PERMISSIONS ───────────────────────────────────────────────────
   role: {
     type: String,
-    enum: ['Agent'],
     default: 'Agent',
   },
   belongsToAgency: {
@@ -176,6 +145,10 @@ const agentSchema = new mongoose.Schema({
     default: true, // agency manager can hide agent without deactivating
   },
   suspensionReason: {
+    type: String,
+    trim: true,
+  },
+  blockReason: {
     type: String,
     trim: true,
   },
@@ -307,22 +280,22 @@ agentSchema.index({ agency: 1, deletedAt: 1, isActive: 1 }); // compound for age
 
 // ─── PRE-SAVE: auto-generate slug from fullName ──────────────────────────
 // Remove the 'next' parameter and make the function async
-agentSchema.pre('save', async function () {
-  // 1. Double-check 'this' is defined
-  if (!this) return;
+// agentSchema.pre('save', async function () {
+//   // 1. Double-check 'this' is defined
+//   if (!this) return;
 
-  // 2. Slug generation logic
-  if (this.isModified('fullName') && !this.slug) {
-    this.slug = this.fullName
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9\s-]/g, '')  // strip special chars
-      .replace(/\s+/g, '-')           // spaces → hyphens
-      .replace(/-+/g, '-');           // collapse double hyphens
-  }
+//   // 2. Slug generation logic
+//   if (this.isModified('fullName') && !this.slug) {
+//     this.slug = this.fullName
+//       .toLowerCase()
+//       .trim()
+//       .replace(/[^a-z0-9\s-]/g, '')  // strip special chars
+//       .replace(/\s+/g, '-')           // spaces → hyphens
+//       .replace(/-+/g, '-');           // collapse double hyphens
+//   }
   
-  // No next() call needed here; resolving the function is enough
-});
+//   // No next() call needed here; resolving the function is enough
+// });
 
 
 // ─── INSTANCE METHODS ────────────────────────────────────────────────────

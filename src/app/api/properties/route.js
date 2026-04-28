@@ -1,42 +1,78 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Property from "@/models/Property.model";
+import Agency from "@/models/Agency.model"; 
 
 export async function GET(request) {
   try {
     await dbConnect();
+
+    // 1. Get Search Params from the URL
     const { searchParams } = new URL(request.url);
-
-    // Build Dynamic Filter
-    const query = {};
     
-    const purpose = searchParams.get("purpose"); // Rent/Sale
-    if (purpose) query.purpose = purpose === "Rent" ? "For Rent" : "For Sale";
+    // Pagination Params
+    const page = parseInt(searchParams.get("page")) || 1;
+    const limit = parseInt(searchParams.get("limit")) || 30;
+    const skip = (page - 1) * limit;
 
-    const type = searchParams.get("type");
-    if (type) query.propertyType = type;
-
+    // Filter Params (Optional filters like Bayut)
+    const purpose = searchParams.get("purpose"); // e.g., 'For Sale'
+    const category = searchParams.get("category"); // e.g., 'Plots'
     const city = searchParams.get("city");
-    if (city && city !== "All Cities") query["location.city"] = city;
 
-    const keyword = searchParams.get("keyword");
-    if (keyword) {
-      query.$or = [
-        { title: { $regex: keyword, $options: "i" } },
-        { description: { $regex: keyword, $options: "i" } },
-        { "location.area": { $regex: keyword, $options: "i" } }
-      ];
-    }
+    // 2. Build the Query Object
+    let query = { 
+      status: "Active", // Only show active listings
+      deletedAt: null      // Safety check
+    };
 
-    // Only show active properties on landing
-    query.status = "Active"; 
+    if (purpose) query.purpose = purpose;
+    if (category) query.category = category;
+    if (city) query["location.city"] = new RegExp(city, "i"); // Case-insensitive search
 
+    // 3. Fetch Data with Server-Side Pagination
     const properties = await Property.find(query)
-      .sort({ isFeatured: -1, createdAt: -1 })
-      .limit(12);
+      .populate({
+        path: "agency",
+        select: "companyName companyLogo verificationStatus", // Required for Bayut card style
+      })
+      .select(
+        "title purpose category propertyType price currency priceLabel area areaUnit images location areaInMarla verification isFeatured metrics.viewCount"
+      )
+      .sort({ isFeatured: -1, createdAt: -1 }) // Priority to Featured, then Newest
+      .skip(skip)
+      .limit(limit)
+      .lean(); // Faster execution for read-only data
 
-    return NextResponse.json({ success: true, data: properties });
+    // 4. Get total count for the frontend pagination UI
+    const totalProperties = await Property.countDocuments(query);
+    const totalPages = Math.ceil(totalProperties / limit);
+
+    return NextResponse.json(
+      {
+        success: true,
+        pagination: {
+          totalProperties,
+          totalPages,
+          currentPage: page,
+          limit,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        },
+        data: properties,
+      },
+      { status: 200 }
+    );
+
   } catch (error) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error("Properties API Error:", error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: "Failed to fetch properties", 
+        error: error.message 
+      },
+      { status: 500 }
+    );
   }
 }
