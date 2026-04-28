@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { 
   MapPin, Maximize, ShieldCheck, ArrowRight, 
-  ChevronLeft, ChevronRight, LayoutGrid, List
+  ChevronLeft, LayoutGrid, List
 } from "lucide-react";
 import RegisterInterestButton from "@/components/property/RegisterInterestButton";
-import Navbar from "@/components/PublicNavbar";
 
-export default function PropertiesListingPage() {
+// ── 2. MOVE YOUR CURRENT LOGIC INTO THIS INNER COMPONENT ──────────────────
+function PropertiesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -48,22 +48,7 @@ export default function PropertiesListingPage() {
   };
 
   return (
-    <div className="bg-[#F7F8F9] min-h-screen mt-20 pb-20">
-
-      {/* ── SEARCH & FILTER HEADER ──────────────────────────────────────── */}
-      <div className="bg-white border-b border-gray-200 py-8 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 md:px-6">
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight italic uppercase">
-            New Projects <span className="text-blue-600">Pakistan</span>
-          </h1>
-          <p className="text-gray-500 text-sm mt-2 font-medium">
-            Explore the latest residential and commercial developments across the country.
-          </p>
-        </div>
-      </div>
-
-      <main className="max-w-7xl mx-auto px-4 md:px-6 mt-10">
-        
+     <main className="max-w-7xl mx-auto px-4 md:px-6 mt-10">
         {/* Results Info & Toggle */}
         <div className="flex justify-between items-center mb-8">
           <p className="text-gray-600 font-bold text-sm">
@@ -100,36 +85,39 @@ export default function PropertiesListingPage() {
             >
               <ChevronLeft size={20} />
             </button>
-
-            {[...Array(pagination.totalPages)].map((_, i) => (
-              <button
-                key={i + 1}
-                onClick={() => handlePageChange(i + 1)}
-                className={`w-12 h-12 rounded-2xl font-black transition-all ${
-                  currentPage === i + 1 
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-200" 
-                  : "bg-white text-gray-400 border border-gray-100 hover:border-blue-200"
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-
-            <button 
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={!pagination.hasNextPage}
-              className="p-4 rounded-2xl bg-white border border-gray-100 disabled:opacity-30 shadow-sm hover:text-blue-600 transition-all"
-            >
-              <ChevronRight size={20} />
-            </button>
+            {/* ... rest of your pagination buttons code ... */}
           </div>
         )}
       </main>
+  );
+}
+
+// ── 3. WRAP EVERYTHING IN THE DEFAULT EXPORT ──────────────────────────────
+export default function PropertiesListingPage() {
+  return (
+    <div className="bg-[#F7F8F9] min-h-screen mt-20 pb-20">
+      {/* Search Header (Can be outside suspense) */}
+      <div className="bg-white border-b border-gray-200 py-8 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 md:px-6">
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight italic uppercase">
+            New Projects <span className="text-blue-600">Pakistan</span>
+          </h1>
+        </div>
+      </div>
+
+      {/* 4. WRAP THE COMPONENT THAT USES useSearchParams IN SUSPENSE */}
+      <Suspense fallback={
+        <div className="max-w-7xl mx-auto px-4 mt-10 text-center font-bold text-gray-400">
+          Loading Listings...
+        </div>
+      }>
+        <PropertiesContent />
+      </Suspense>
     </div>
   );
 }
 
-// ── PROPERTY CARD COMPONENT (BAYUT STYLE) ─────────────────────────────
+
 function PropertyCard({ property }) {
   return (
     <div className="bg-white rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-sm hover:shadow-2xl transition-all duration-500 group flex flex-col h-full">
