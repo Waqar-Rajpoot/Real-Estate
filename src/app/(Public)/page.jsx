@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-// import Navbar from "@/components/PublicNavbar";
 import RegisterInterestButton from "@/components/property/RegisterInterestButton";
 
 // --- ICONS ---
@@ -68,7 +67,6 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-white font-sans">
 
-      {/* <Navbar /> */}
       {/* ── HERO SECTION ────────────────────────────────────────────────────── */}
       <section 
         className="relative min-h-[650px] flex items-center justify-center bg-slate-900 overflow-hidden"

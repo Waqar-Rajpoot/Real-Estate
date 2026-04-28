@@ -18,7 +18,7 @@ const Navbar = () => {
           <Link href="/" className="flex items-center gap-2.5 shrink-0">
             <div className="relative w-18 h-18 shrink-0">
               <Image
-                src="/logo.svg"
+                src="/Leadstokey.svg"
                 alt="Logo"
                 fill
                 className="object-contain p-0.5"

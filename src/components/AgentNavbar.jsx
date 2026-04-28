@@ -29,7 +29,7 @@ const AgentNavbar = () => {
           >
             <div className="relative w-18 h-18 shrink-0">
               <Image
-                src="/logo.svg"
+                src="/Leadstokey.svg"
                 alt="LeadsToKey"
                 fill
                 className="object-contain p-0.5"

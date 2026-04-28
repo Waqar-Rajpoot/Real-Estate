@@ -13,7 +13,6 @@ import {
 // Import Google Maps components
 import { GoogleMap, useJsApiLoader, MarkerF } from "@react-google-maps/api";
 import RegisterInterestButton from "@/components/property/RegisterInterestButton";
-import Navbar from "@/components/PublicNavbar";
 
 // Map Container Style
 const containerStyle = {
@@ -60,7 +59,6 @@ export default function PropertyDetailsPage() {
 
   return (
     <div className="bg-gray-50 min-h-screen pb-20">
-      <Navbar />
 
       {/* ── HEADER SECTION ────────────────────────────────────────────────── */}
       <div className="bg-white border-b border-gray-200 pt-6">
