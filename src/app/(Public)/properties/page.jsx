@@ -85,7 +85,6 @@ function PropertiesContent() {
             >
               <ChevronLeft size={20} />
             </button>
-            {/* ... rest of your pagination buttons code ... */}
           </div>
         )}
       </main>

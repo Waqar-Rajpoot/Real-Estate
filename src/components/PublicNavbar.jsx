@@ -52,12 +52,6 @@ const Navbar = () => {
           <div className="hidden md:flex items-center gap-4">
             {session ? (
               <div className="flex items-center gap-3">
-                <Link 
-                  href="/dashboard" 
-                  className="text-sm font-bold text-gray-600 hover:text-blue-600 px-3"
-                >
-                  Dashboard
-                </Link>
                 <button
                   onClick={() => signOut({ callbackUrl: "/" })}
                   className="flex items-center gap-2 text-sm font-black text-red-500 bg-red-50 hover:bg-red-100 px-4 py-2.5 rounded-2xl transition-all duration-200"
